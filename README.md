@@ -151,7 +151,98 @@ itpu/
 **Example**: Try it with the [HRM (Hierarchical Reasoning Model)](https://github.com/sapientinc/HRM) project to measure MI between planner ↔ worker at each reasoning step.
 
 -----
+#### EEG example (works offline with fallback)
 
+```bash
+python examples/eeg_eye_state_demo.py
+# If data/eeg_eye_state.csv exists, uses it; otherwise runs a synthetic fallback.
+# Writes:
+#   results/examples/eeg_mi_heatmap.png
+#   results/examples/eeg_mi_to_label.png
+
+**Acceptance criteria**
+- Running `python examples/eeg_eye_state_demo.py` produces two PNGs under `results/examples/` whether or not the CSV exists.
+- No new dependencies; CI still green.
+
+---
+
+## Task 8 — Add a simple **windowed MI** prototype
+
+**Goal:** Provide a streaming-style API to compute MI over sliding windows (software path), so users can visualize MI vs time.
+
+### 8A) New module: `itpu/windowed.py`
+
+> Create this file:
+
+```python
+# itpu/windowed.py
+import numpy as np
+from typing import Tuple, Optional
+from itpu.sdk import ITPU
+
+
+def windowed_mi(
+    x: np.ndarray,
+    y: np.ndarray,
+    window_size: int,
+    step: int,
+    *,
+    method: str = "hist",
+    bins: int = 128,
+    k: int = 5,
+    itpu: Optional[ITPU] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Sliding-window mutual information between 1D signals x and y.
+
+    Parameters
+    ----------
+    x, y : arrays of shape (n_samples,)
+    window_size : int
+        Number of samples per window.
+    step : int
+        Hop length between successive windows.
+    method : {"hist","ksg"}
+        Estimation backend (software path).
+    bins : int
+        Histogram bins (if method="hist")
+    k : int
+        k for KSG (if method="ksg")
+    itpu : ITPU or None
+        Reuse an instance if provided.
+
+    Returns
+    -------
+    mi_vals : array, shape (n_windows,)
+        MI per window (nats).
+    centers : array, shape (n_windows,)
+        Center index (float) of each window in the original timeline.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("x and y must be 1D")
+    if len(x) != len(y):
+        raise ValueError("x and y must have same length")
+    n = len(x)
+    if window_size <= 1 or window_size > n:
+        raise ValueError("invalid window_size")
+    if step < 1:
+        raise ValueError("step must be >= 1")
+
+    itpu = itpu or ITPU(device="software")
+
+    starts = np.arange(0, n - window_size + 1, step, dtype=int)
+    mi_vals = np.empty(len(starts), dtype=float)
+    centers = starts + (window_size - 1) / 2.0
+
+    for i, s in enumerate(starts):
+        e = s + window_size
+        mi_vals[i] = itpu.mutual_info(x[s:e], y[s:e], method=method, bins=bins, k=k)
+
+    return mi_vals, centers
+
+-----
 ## Roadmap
 
 - **R1 (Software)**: Finalize SDK, correctness tests, baselines vs NumPy/Scikit

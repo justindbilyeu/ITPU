@@ -1,5 +1,6 @@
 # Information-Theoretic Processing Unit (ITPU)
-![CI](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml/badge.svg)
+
+
 **A coprocessor + SDK for entropy, mutual information, and k-NN statistics.**
 
 GPUs/TPUs are amazing at matrix math. ITPU is for measuring information flow itself—fast histograms/entropy, MI (plug-in/KSG/KDE), and streaming estimators—so you can watch and steer adaptive systems in real time.
@@ -16,7 +17,8 @@ ITPU sits beside your CPU/GPU and exposes simple calls like mutual_info(x, y). U
 [![Status](https://img.shields.io/badge/status-pre--alpha-orange.svg)](https://github.com)
 
 -----
-
+![CI](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml/badge.svg)
+-----
 ## Why ITPU?
 
 - **Pain today**: Entropy/MI, histograms, and k-NN are branchy, memory-bound, and slow on CPUs/GPUs

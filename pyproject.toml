@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "itpu"
+version = "0.0.1"
+description = "Information-Theoretic Processing Unit — software SDK baseline"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Justin Bilyeu et al." }]
+requires-python = ">=3.9"
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "numba>=0.58",
+  "pandas>=2.0",
+  "matplotlib>=3.7"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-cov>=4.1"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

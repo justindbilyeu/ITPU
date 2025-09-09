@@ -3,7 +3,14 @@
 **A coprocessor + SDK for entropy, mutual information, and k-NN statistics.**
 
 GPUs/TPUs are amazing at matrix math. ITPU is for measuring information flow itself—fast histograms/entropy, MI (plug-in/KSG/KDE), and streaming estimators—so you can watch and steer adaptive systems in real time.
+What is the ITPU?
+The Information-Theoretic Processing Unit (ITPU) is a coprocessor—and matching Python SDK—that makes it fast and easy to measure information, not just crunch matrices. Today’s GPUs excel at linear algebra, but struggle with the irregular, memory-heavy tasks behind information science: entropy (how uncertain a signal is), mutual information (how much two signals share), and k-nearest-neighbor statistics used in high-quality MI estimators. The ITPU accelerates these kernels directly.
 
+Why it matters.
+If you can compute these measures in real time, you can watch information flow through a system and adapt on the fly: stabilize a brain-computer interface, register medical images robustly, trace causal links in data, or monitor model internals while they reason.
+
+How it fits.
+ITPU sits beside your CPU/GPU and exposes simple calls like mutual_info(x, y). Use the software backend today; our FPGA pathfinder and, later, an ASIC target high throughput and low latency with far lower power than general-purpose hardware.
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/status-pre--alpha-orange.svg)](https://github.com)

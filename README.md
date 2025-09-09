@@ -243,6 +243,43 @@ def windowed_mi(
     return mi_vals, centers
 
 -----
+#### MI grid (quick sweep)
+
+```bash
+python examples/mi_grid.py
+# -> writes results/examples/mi_grid.csv
+#    (one row per bin setting; uses EEG CSV if present, otherwise synthetic fallback)
+
+**Acceptance criteria (Task 9)**  
+- `python examples/mi_grid.py` creates `results/examples/mi_grid.csv` and prints rows.  
+- Works whether or not `data/eeg_eye_state.csv` exists.  
+- No new heavy deps.
+
+---
+
+## Task 10 — Return MI **and** entropies (debug-friendly output)
+
+Add an `output` flag to `mutual_info()` so users can request MI alone (default) or MI + entropies (for `method="hist"`). For `method="ksg"`, only `output="mi"` is supported (entropies are undefined in KSG).
+
+### 10A) Patch `itpu/sdk.py`
+
+**1) Add these helpers near the top (module scope):**
+```python
+import numpy as np
+
+def _safe_prob(arr: np.ndarray) -> np.ndarray:
+    p = arr.astype(float)
+    s = p.sum()
+    if s <= 0:
+        return np.zeros_like(p, dtype=float)
+    p /= s
+    return p
+
+def _entropy_from_prob(p: np.ndarray) -> float:
+    pz = p[p > 0]
+    return float(-(pz * np.log(pz)).sum())
+
+-----
 ## Roadmap
 
 - **R1 (Software)**: Finalize SDK, correctness tests, baselines vs NumPy/Scikit

@@ -10,3 +10,9 @@ This repo ships **offline** examples. To run them with real data, download a CSV
 
 **How to get it (one simple way)**  
 Download the CSV from a mirror or export using your browser from the UCI site, then save as:
+data/eeg_eye_state.csv
+
+## Notes
+
+- Keep files small(ish). We aim for quick, laptop-friendly demos.
+- If you can’t download now, the example will fall back to synthetic data and still run.

@@ -1,5 +1,5 @@
 # Information-Theoretic Processing Unit (ITPU)
-
+![CI](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml/badge.svg)
 **A coprocessor + SDK for entropy, mutual information, and k-NN statistics.**
 
 GPUs/TPUs are amazing at matrix math. ITPU is for measuring information flow itself—fast histograms/entropy, MI (plug-in/KSG/KDE), and streaming estimators—so you can watch and steer adaptive systems in real time.

@@ -5,24 +5,22 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "itpu"
 version = "0.0.1"
-description = "Information-Theoretic Processing Unit — software SDK baseline"
+description = "Information-Theoretic Processing Unit — software SDK (pre-alpha)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-authors = [{ name = "Justin Bilyeu et al." }]
+authors = [{ name = "ITPU Team" }]
 requires-python = ">=3.9"
 dependencies = [
-  "numpy>=1.24",
+  "numpy>=1.23",
   "scipy>=1.10",
   "numba>=0.58",
-  "pandas>=2.0",
-  "matplotlib>=3.7"
+  "matplotlib>=3.7",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=7.4", "pytest-cov>=4.1"]
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["itpu*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

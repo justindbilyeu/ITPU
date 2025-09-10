@@ -1,6 +1,26 @@
 # Information-Theoretic Processing Unit (ITPU)
 
 **A coprocessor + SDK for entropy, mutual information, and k-NN statistics.**
+# ITPU: Making Information Flow as Fast as Matrix Math
+
+You know how your phone gets hot when it's thinking really hard? Well, there's this whole category of math that computers are terrible at - measuring how information flows between things. Like figuring out which brain signals predict which thoughts, or which genes cause which diseases. Right now it takes forever and burns tons of energy. 
+
+**We're building a chip that makes that math as fast as regular math.**
+
+## Why This Matters
+
+- **Neuroscientists** wait hours to analyze brain recordings that should update in real-time
+- **Medical researchers** can't find disease patterns hidden in genetic data  
+- **AI researchers** can't understand what their models are actually learning
+
+**The problem**: GPUs are amazing at matrix multiplication, but terrible at measuring information flow (entropy, mutual information, k-nearest neighbors). These operations are branchy, memory-bound, and slow.
+
+**Our solution**: Custom hardware that makes information-theoretic operations first-class citizens, not second-class citizens.
+
+---
+
+*Technical details below for developers...*
+
 
 GPUs/TPUs are amazing at matrix math. ITPU is for measuring information flow itself—fast histograms/entropy, MI (plug-in/KSG/KDE), and streaming estimators—so you can watch and steer adaptive systems in real time.
 

@@ -19,7 +19,7 @@ Modern chips are great at matrix math (good for neural nets) but bad at measurin
 - 🧭 **Road to hardware:** we’ll validate kernels + users in software, then lift the exact API onto an FPGA pathfinder
 
 ---
-
+'''
 ## Quickstart (local, pre-alpha)
 
 ```bash

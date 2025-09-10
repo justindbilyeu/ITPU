@@ -6,7 +6,7 @@
 You know how your phone gets hot when it's thinking really hard? Well, there's this whole category of math that computers are terrible at - measuring how information flows between things. Like figuring out which brain signals predict which thoughts, or which genes cause which diseases. Right now it takes forever and burns tons of energy. 
 
 **We're building a chip that makes that math as fast as regular math.**
-
+**Think GPU for graphics, but for understanding information itself.**
 ## Why This Matters
 
 - **Neuroscientists** wait hours to analyze brain recordings that should update in real-time
@@ -19,7 +19,8 @@ You know how your phone gets hot when it's thinking really hard? Well, there's t
 
 ---
 
-*Technical details below for developers...*
+---
+## For Developers: How We're Building This
 
 
 GPUs/TPUs are amazing at matrix math. ITPU is for measuring information flow itself—fast histograms/entropy, MI (plug-in/KSG/KDE), and streaming estimators—so you can watch and steer adaptive systems in real time.
@@ -175,7 +176,11 @@ itpu/
 ---
 
 ## Examples
+## Why This Matters
 
+- **Neuroscientists** wait hours to analyze brain recordings that should update in real-time **→ paralyzed patients wait longer for better prosthetics**
+- **Medical researchers** can't find disease patterns hidden in genetic data **→ cures stay hidden in plain sight**
+- **AI researchers** can't understand what their models are actually learning **→ we're flying blind with increasingly powerful systems**
 ### EEG Example
 
 ```bash

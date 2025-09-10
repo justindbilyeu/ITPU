@@ -45,7 +45,10 @@ You should see non-zero MI printed and a count of sliding-window results.
 ⸻
 
 Minimal API
-
+- Histogram MI: fast, discrete approximation
+- KSG MI: continuous estimator (Kraskov–Stögbauer–Grassberger, variant I)
+  * Default metric = chebyshev (p = ∞ norm)
+  * Returns MI in nats
 from itpu.sdk import ITPU
 from itpu.utils.windowed import windowed_mi
 import numpy as np

@@ -1,26 +1,29 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "itpu"
-version = "0.0.1"
-description = "Information-Theoretic Processing Unit — software SDK (pre-alpha)"
+version = "0.1.0"
+description = "Information-Theoretic Processing Unit — software SDK (hardware-ready API)"
 readme = "README.md"
-license = { text = "Apache-2.0" }
-authors = [{ name = "ITPU Team" }]
 requires-python = ">=3.9"
+authors = [{name = "Justin Bilyeu"}]
+license = {text = "Apache-2.0"}
 dependencies = [
-  "numpy>=1.23",
-  "scipy>=1.10",
-  "numba>=0.58",
-  "matplotlib>=3.7",
+    "numpy>=1.22",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "scikit-learn>=1.2",
+    "pandas>=1.5",
+    "numba>=0.57",
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["itpu*"]
-
-[tool.pytest.ini_options]
-addopts = "-q"
-testpaths = ["tests"]

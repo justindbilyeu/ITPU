@@ -1,61 +1,89 @@
 # Information-Theoretic Processing Unit (ITPU)
 
-**Accelerate entropy, mutual information (MI), and k-NN–based estimators—starting in software, designed for hardware.**  
-Apache-2.0 • Pre-alpha
-
----
-# ITPU: Making Information Flow as Fast as Matrix Math
-
-You know how your phone gets hot when it's thinking really hard? There's a whole category of math that computers are terrible at - measuring how information flows between things. Like figuring out which brain signals predict which thoughts, or which genes cause which diseases. Right now it takes forever and burns tons of energy.
-
-**We're building hardware that makes that math as fast as regular math.**
-
-## Why This Matters
-[Current technical content follows...]
-## What is ITPU (in plain English)
-
-Modern chips are great at matrix math (good for neural nets) but bad at measuring information itself. Many real problems—BCI/neuroscience, medical image registration, causal discovery—need **entropy/MI** and **k-NN statistics** fast and in streaming form.  
-**ITPU** is a coprocessor concept and an SDK: we’re shipping a **software SDK now** (same API you’ll use on a future FPGA/ASIC), so you can profile information flow today and drop in hardware later without changing code.
+**Accelerate entropy, mutual information (MI), and k-NN–based estimators — software today, designed for hardware tomorrow.**  
+Apache-2.0 • Pre-alpha • Software-first pivot (Sept 2025)
 
 ---
 
-## Status: **Software-first pivot (Sept 2025)**
+## ITPU, in one line
 
-- ✅ **Working now:** histogram-based MI (`method="hist"`), sliding-window/streaming helpers
-- 🧪 **In progress:** KSG MI (`method="ksg"`, k-NN estimator), benchmarking suite, EEG demo
-- 🧭 **Road to hardware:** we’ll validate kernels + users in software, then lift the exact API onto an FPGA pathfinder
+Most computers are great at multiplying matrices—and bad at **measuring information**. ITPU flips that: it makes entropy, mutual information, and k-NN statistics fast and **streamable**, so you can see **information flow in real time**.
 
 ---
-'''
+
+## Why this matters
+
+**Neuroscientists** wait hours to analyze brain recordings that should update in real time. A paralyzed patient testing a BCI can’t get feedback fast enough to learn control efficiently.
+
+**Medical researchers** miss patterns in high-dimensional data because finding information relationships across thousands of variables is computationally painful.
+
+**AI teams** ship powerful models without tools to see how information actually flows between components as they reason.
+
+**The core problem:** Today’s computers excel at matrix math but struggle to *measure information itself*—entropy, mutual information (MI), and related statistics that reveal how systems work. These workloads are **irregular** and **memory-intensive**, so they don’t map well to standard accelerators.
+
+**Current tools often fall short:**
+
+- CPUs are too slow for real-time use  
+- GPUs are often inefficient on branchy, irregular operations  
+- Existing libraries force trade-offs between speed, accuracy, and streaming  
+- Few options support true *real-time* information analysis
+
+**What becomes possible with fast information processing:**
+
+- BCIs that adapt within milliseconds  
+- Medical imaging that registers scans during surgery  
+- AI systems with live information-flow readouts  
+- Discovery workflows that surface correlations previously buried by compute limits  
+- Instruments that adjust experiments on the fly based on information content
+
+---
+
+## What is ITPU (plain English)
+
+Modern chips are great at matrix math (good for neural nets) but bad at measuring information itself. Many real problems—BCI/neuroscience, medical image registration, causal discovery—need **entropy/MI** and **k-NN statistics** fast and in **streaming** form.  
+**ITPU** is a coprocessor concept *and* an SDK: we’re shipping a **software SDK now** (with the same API you’ll use on a future FPGA/ASIC), so you can profile information flow today and drop in hardware later **without changing code**.
+
+---
+
+## Status: software-first (Sept 2025)
+
+- ✅ **Working now:** histogram-based MI (`method="hist"`), sliding-window / streaming helpers  
+- 🧪 **Experimental:** KSG MI (`method="ksg"`, k-NN estimator) and windowed KSG; benchmarking suite; EEG demo  
+- 🧭 **Road to hardware:** validate kernels + users in software → lift the exact API onto an FPGA pathfinder
+
+---
+
 ## Quickstart (local, pre-alpha)
 
+> **“Repo root”** = the folder that contains `README.md` and the `itpu/` directory.
+
 ```bash
-# 1) Clone and enter the repo root (folder that contains README.md and the itpu/ directory)
+# 1) Clone and enter the repo root
 git clone https://github.com/justindbilyeu/ITPU
 cd ITPU
 
-# 2) (Recommended) Create a virtual env
+# 2) (Recommended) Create & activate a virtual environment
 python -m venv .venv
-# Mac/Linux:
+# macOS/Linux:
 source .venv/bin/activate
 # Windows (PowerShell):
 # .venv\Scripts\Activate.ps1
 
-# 3) Minimal deps for the software path
-pip install numpy scipy
+# 3) Install minimal dependencies
+pip install numpy scipy matplotlib
 
-# 4) Run the smoke test
+# 4) Run a smoke test
 python scripts/smoke_test.py
+# You should see a non-zero MI and a count of sliding-window results.
 
-You should see non-zero MI printed and a count of sliding-window results.
+# 5) (Optional) Try the EEG streaming demo if present
+# python examples/eeg_streaming_demo.py
+
 
 ⸻
 
 Minimal API
-- Histogram MI: fast, discrete approximation
-- KSG MI: continuous estimator (Kraskov–Stögbauer–Grassberger, variant I)
-  * Default metric = chebyshev (p = ∞ norm)
-  * Returns MI in nats
+
 from itpu.sdk import ITPU
 from itpu.utils.windowed import windowed_mi
 import numpy as np
@@ -65,19 +93,29 @@ itpu = ITPU(device="software")  # same API will target FPGA later
 # Example: point MI (histogram method)
 x = np.random.randn(50_000)
 y = 0.6*x + 0.4*np.random.randn(50_000)
-mi = itpu.mutual_info(x, y, method="hist", bins=64)  # returns MI in nats
+mi = itpu.mutual_info(x, y, method="hist", bins=64)  # MI in nats
 
 # Sliding-window MI (hist)
 starts, mi_vals = windowed_mi(x, y, window_size=2000, hop_size=400, bins=64)
 
-KSG (k-NN) estimator is being wired up; you’ll call it with method="ksg", k=5 once merged.
+# KSG (k-NN) estimator (experimental; once merged)
+# mi_ksg = itpu.mutual_info(x, y, method="ksg", k=5)  # MI in nats
+
+	•	Histogram MI: fast, discrete approximation (good for streaming & dashboards)
+	•	KSG MI: non-parametric continuous estimator (Kraskov–Stögbauer–Grassberger, variant I)
+
+Units: MI is reported in nats (divide by np.log(2) for bits).
 
 ⸻
 
-Why software-first?
-	•	Faster proof, lower risk. We validate accuracy, speed, and UX now.
-	•	Same API later. When the FPGA card lands, you flip device="software" → device="fpga"; no code rewrite.
-	•	Streaming is the wedge. Most MI libraries are batch-only; we’re prioritizing sliding windows + real-time.
+What’s in this repo today
+	•	itpu/kernels_sw/hist.py — software histogram & entropy primitives
+	•	itpu/kernels_sw/ksg.py — experimental KSG estimator + windowed helper
+	•	itpu/sdk.py — device-agnostic API (device="software" now; "fpga" later)
+	•	itpu/utils/windowed.py — sliding/streaming utilities
+	•	scripts/smoke_test.py — quick correctness check
+	•	examples/eeg_streaming_demo.py — EEG MI timeseries demo (local CSV or synthetic fallback)
+	•	benchmarks/ — apples-to-apples comparisons vs SciPy/scikit-learn (coming online)
 
 ⸻
 
@@ -92,32 +130,33 @@ Early goalposts: ≥2–5× faster histogram MI on common sizes and first-class 
 
 ⸻
 
-Roadmap (R1 → R3 software, R4 → R5 hardware)
-	•	R1 (now): histogram MI + sliding windows, smoke tests, clean docs
-	•	R2 (next): KSG MI (ksg_mi_estimate), comprehensive benchmarks, EEG streaming demo
-	•	R3: convenience APIs (batched MI matrices, masks, categorical MI), optional CuPy acceleration
-	•	R4: FPGA pathfinder spec + sizing; partner pilots (BCI first)
-	•	R5: ASIC decision (only after proven demand + perf)
+Roadmap
+
+R1 (now): histogram MI + sliding windows, smoke tests, clean docs
+R2 (next): KSG MI (ksg_mi_estimate), comprehensive benchmarks, EEG streaming demo
+R3: convenience APIs (batched MI matrices, masks, categorical MI), optional CuPy acceleration
+R4: FPGA pathfinder spec + sizing; BCI partner pilots
+R5: ASIC decision (only after proven demand + performance)
 
 ⸻
 
-Example demos
-	•	scripts/smoke_test.py – quick sanity check
-	•	examples/eeg_streaming_demo.py – streaming MI on EEG (uses local CSV or synthetic fallback)
-	•	benchmarks/compare_baselines.py – apples-to-apples against popular libs (coming online)
+Examples & demos
+	•	scripts/smoke_test.py — quick sanity check
+	•	examples/eeg_streaming_demo.py — streaming MI on EEG (eyes open/closed), with synthetic fallback
+	•	benchmarks/compare_baselines.py — apples-to-apples against popular libs (coming online)
 
 ⸻
 
 FAQ
 
 Why not just use a GPU?
-GPUs crush dense matrices; MI/k-NN are irregular and memory-bound. We optimize dataflow for histograms and neighbor counts, and offer true streaming—then port exactly that to hardware.
+GPUs crush dense matrices; MI/k-NN are irregular and memory-bound. We optimize dataflow for histograms and neighbor counts, offer true streaming, and then port exactly that to hardware.
 
 Do I need special hardware?
 No. Today is pure Python/NumPy/SciPy. The same code will target an FPGA card later.
 
-Units?
-MI is reported in nats (divide by np.log(2) for bits).
+Bits or nats?
+We return nats. For bits, divide by np.log(2).
 
 ⸻
 
@@ -131,12 +170,14 @@ Issues and PRs welcome! High-leverage areas:
 Dev tips:
 
 # From repo root
-pip install -r requirements-dev.txt   # (if present; otherwise numpy/scipy/matplotlib)
-pytest -q                             # test suite (coming online)
+# If a dev requirements file exists:
+# pip install -r requirements-dev.txt
+pytest -q  # test suite (coming online)
 
 
 ⸻
 
 License
 
-Apache-2.0. See LICENSE.
+Apache-2.0 — see LICENSE.
+

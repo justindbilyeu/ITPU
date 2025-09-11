@@ -1,4 +1,3 @@
-```markdown
 # Information-Theoretic Processing Unit (ITPU)
 
 **Accelerate entropy, mutual information (MI), and k-NN–based estimators — software today, designed for hardware tomorrow.**

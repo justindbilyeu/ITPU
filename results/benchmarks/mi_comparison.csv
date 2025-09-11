@@ -1,0 +1,78 @@
+# path: benchmarks/mi_benchmark.py
+import os, time, csv
+import numpy as np
+from math import log
+
+# --- Prefer in-repo implementations if available ---
+try:
+    from itpu.kernels_sw.ksg import ksg_mi_estimate as _ksg_impl
+except Exception:
+    _ksg_impl = None
+
+def ksg_mutual_info(x, y, k=5):
+    if _ksg_impl is None:
+        # Minimal fallback (slow, simple)
+        from scipy.spatial import cKDTree
+        from scipy.special import digamma
+        N = len(x)
+        z = np.column_stack((x, y))
+        tree = cKDTree(z)
+        dists, _ = tree.query(z, k=k+1)
+        eps = dists[:, -1] + 1e-12
+        tx = cKDTree(x[:, None]); ty = cKDTree(y[:, None])
+        nx = np.array([tx.query_ball_point([x[i]], eps[i], return_length=True)-1 for i in range(N)])
+        ny = np.array([ty.query_ball_point([y[i]], eps[i], return_length=True)-1 for i in range(N)])
+        return float(digamma(N) + digamma(k) - np.mean(digamma(nx+1) + digamma(ny+1)))
+    else:
+        mi, _stats = _ksg_impl(x, y, k=k, metric="chebyshev")
+        return float(mi)
+
+def hist_mutual_info(x, y, bins=128):
+    H, _, _ = np.histogram2d(x, y, bins=bins)
+    pxy = H / H.sum()
+    px = pxy.sum(axis=1, keepdims=True)
+    py = pxy.sum(axis=0, keepdims=True)
+    nz = pxy > 0
+    logpx = np.log(px, where=px > 0, out=np.full_like(px, -np.inf))
+    logpy = np.log(py, where=py > 0, out=np.full_like(py, -np.inf))
+    mi = np.sum(pxy[nz] * (np.log(pxy[nz]) - (logpx + logpy)[nz]))
+    return float(mi)
+
+def main():
+    os.makedirs("results/benchmarks", exist_ok=True)
+
+    rng = np.random.default_rng(0)
+    n = 200_000
+    rho = 0.7
+    x = rng.normal(size=n)
+    y = rho * x + np.sqrt(1.0 - rho**2) * rng.normal(size=n)
+
+    # Analytic MI for jointly Gaussian (nats)
+    mi_theory = -0.5 * log(1.0 - rho**2)
+
+    t0 = time.perf_counter()
+    mi_hist = hist_mutual_info(x, y, bins=128)
+    t_hist = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    mi_ksg = ksg_mutual_info(x, y, k=5)
+    t_ksg = time.perf_counter() - t0
+
+    rows = [
+        ["Histogram (hist, 128 bins)", f"{mi_hist:.6f}", f"{t_hist:.4f}"],
+        ["K-NN (KSG, k=5)",            f"{mi_ksg:.6f}", f"{t_ksg:.4f}"],
+        ["Analytic (ρ=0.7, Gaussian)", f"{mi_theory:.6f}", "-"],
+    ]
+
+    print("\nMI Benchmark (n=200k, CPU)\nMethod                     MI (nats)   Time (s)")
+    print("------------------------------------------------------")
+    for m, mi, t in rows:
+        print(f"{m:26} {mi:>10}   {t:>7}")
+
+    with open("results/benchmarks/mi_comparison.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["Method", "MI (nats)", "Time (s)"])
+        w.writerows(rows)
+
+if __name__ == "__main__":
+    main()

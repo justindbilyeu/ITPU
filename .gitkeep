@@ -1,0 +1,31 @@
+ITPU/
+├─ itpu/
+│  ├─ __init__.py
+│  ├─ sdk.py
+│  ├─ kernels_sw/
+│  │  ├─ __init__.py
+│  │  ├─ hist.py
+│  │  └─ ksg.py            # if merged
+│  └─ utils/
+│     ├─ __init__.py
+│     └─ windowed.py
+├─ examples/
+│  └─ eeg_streaming_demo.py
+├─ benchmarks/
+│  └─ compare_baselines.py
+├─ scripts/
+│  └─ smoke_test.py
+├─ tests/
+│  ├─ test_hist.py
+│  └─ test_windowed.py
+├─ data/.gitkeep
+├─ results/.gitkeep
+├─ docs/
+│  ├─ market/
+│  └─ hardware/
+├─ .github/workflows/ci.yml
+├─ .gitignore
+├─ pyproject.toml
+├─ requirements.txt
+├─ CONTRIBUTING.md
+└─ README.md

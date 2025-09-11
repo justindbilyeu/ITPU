@@ -1,93 +1,42 @@
-# SPDX-License-Identifier: Apache-2.0
-import numpy as np
-from itpu import ITPU
-
-def main():
-    rng = np.random.default_rng(0)
-    N = 200_000
-    x = rng.normal(size=N)
-    y = 0.8 * x + 0.2 * rng.normal(size=N)
-
-    itpu = ITPU(device="software")
-
-    mi_hist = itpu.mutual_info(x, y, method="hist", bins=128)
-    mi_ksg  = itpu.mutual_info(x, y, method="ksg",  k=5)
-
-    # analytic MI for jointly Gaussian with corr rho:  -0.5*ln(1-rho^2)
-    rho = np.corrcoef(x, y)[0,1]
-    mi_gauss = -0.5 * np.log(1 - rho**2 + 1e-12)
-
-    print(f"Histogram MI: {mi_hist:.3f}")
-    print(f"KSG MI      : {mi_ksg:.3f}")
-    print(f"Gaussian MI : {mi_gauss:.3f} (reference)")
-
-if __name__ == "__main__":
-    main()
-# examples/mi_demo.py
-"""
-Minimal MI demo: generates synthetic correlated features, computes full MI matrix,
-and saves a heatmap to results/examples/mi_matrix_heatmap.png
-
-Run:
-  python examples/mi_demo.py --n 60000 --d 8 --rho 0.6 --method hist --bins 128
-"""
-import argparse
-import os
+import os, argparse
 import numpy as np
 import matplotlib.pyplot as plt
-
 from itpu.sdk import ITPU
+from itpu.utils.windowed import windowed_mi
 
-
-def make_correlated_features(n=60_000, d=8, rho=0.6, seed=0):
-    rng = np.random.default_rng(seed)
-    z = rng.standard_normal((n, 1))
-    noise = rng.standard_normal((n, d))
-    X = rho * z + np.sqrt(1 - rho**2) * noise
-    return X.astype(np.float64)
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--n", type=int, default=60_000)
-    ap.add_argument("--d", type=int, default=8)
-    ap.add_argument("--rho", type=float, default=0.6)
-    ap.add_argument("--method", choices=["hist","ksg"], default="hist")
-    ap.add_argument("--bins", type=int, default=128)
-    ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--out_dir", type=str, default="results/examples")
-    args = ap.parse_args()
-
-    os.makedirs(args.out_dir, exist_ok=True)
-
-    X = make_correlated_features(n=args.n, d=args.d, rho=args.rho, seed=42)
+def main(no_plot: bool):
+    os.makedirs("results/examples", exist_ok=True)
+    rng = np.random.default_rng(42)
+    n = 60_000
+    x = rng.normal(size=n)
+    y = 0.7 * x + 0.3 * rng.normal(size=n)
 
     itpu = ITPU(device="software")
-    M = itpu.mutual_info_matrix(
-        X,
-        method=args.method,
-        bins=args.bins,
-        k=args.k,
-        pairs="all",
-    )
+    mi_hist = itpu.mutual_info(x, y, method="hist", bins=64)
+    try:
+        mi_ksg = itpu.mutual_info(x, y, method="ksg", k=5)
+    except Exception:
+        mi_ksg = None
 
-    # Plot heatmap
-    plt.figure(figsize=(6, 5))
-    plt.imshow(M, origin="lower", interpolation="nearest", aspect="auto")
-    plt.colorbar(label="Mutual Information (nats)")
-    plt.title(f"Pairwise MI ({args.method})")
-    plt.xlabel("feature")
-    plt.ylabel("feature")
+    starts, mi_series = windowed_mi(x, y, window_size=4000, hop_size=800, bins=64)
 
-    out_png = os.path.join(args.out_dir, "mi_matrix_heatmap.png")
-    plt.tight_layout()
-    plt.savefig(out_png, dpi=160)
-    print(f"Saved: {out_png}")
+    print(f"[hist] point MI (nats): {mi_hist:.3f}")
+    if mi_ksg is not None:
+        print(f"[ksg ] point MI (nats): {mi_ksg:.3f}")
 
-    # Optional: print a quick summary
-    iu = np.triu_indices_from(M, k=1)
-    print(f"mean off-diagonal MI = {M[iu].mean():.4f} nats")
+    if no_plot:
+        return
 
+    plt.figure(figsize=(9,4))
+    plt.plot(starts, mi_series, lw=2)
+    plt.title("Sliding-window MI (hist)")
+    plt.xlabel("sample"); plt.ylabel("MI (nats)")
+    out = "results/examples/mi_demo.png"
+    plt.tight_layout(); plt.savefig(out, dpi=150)
+    print(f"Wrote {out}")
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--no-plot", action="store_true", help="skip figure generation")
+    args = ap.parse_args()
+    main(args.no_plot)

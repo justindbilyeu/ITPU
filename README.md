@@ -4,7 +4,14 @@
 Apache-2.0 • Pre-alpha
 
 ---
+# ITPU: Making Information Flow as Fast as Matrix Math
 
+You know how your phone gets hot when it's thinking really hard? There's a whole category of math that computers are terrible at - measuring how information flows between things. Like figuring out which brain signals predict which thoughts, or which genes cause which diseases. Right now it takes forever and burns tons of energy.
+
+**We're building hardware that makes that math as fast as regular math.**
+
+## Why This Matters
+[Current technical content follows...]
 ## What is ITPU (in plain English)
 
 Modern chips are great at matrix math (good for neural nets) but bad at measuring information itself. Many real problems—BCI/neuroscience, medical image registration, causal discovery—need **entropy/MI** and **k-NN statistics** fast and in streaming form.  

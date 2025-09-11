@@ -1,26 +1,39 @@
-if method == "ksg":
-    from .kernels_sw.ksg import mi_ksg
-    return float(mi_ksg(
-        x, y,
-        k=kwargs.get("k", 5),
-        metric=kwargs.get("metric", "chebyshev"),
-        mask=kwargs.get("mask", None),
-        jitter=kwargs.get("jitter", 0.0),
-        seed=kwargs.get("seed", None)
-    ))
-# inside itpu/sdk.py
-def mutual_info(self, x, y, method="hist", bins=64, k=5, metric="euclidean"):
-    import numpy as np
-    x = np.asarray(x); y = np.asarray(y)
+# SPDX-License-Identifier: Apache-2.0
+"""
+Device-agnostic SDK for ITPU operations.
+"""
 
-    if method == "hist":
-        # your existing histogram MI impl or call into kernels_sw.hist
-        from itpu.utils.windowed import _hist_mi
-        return _hist_mi(x, y, bins=bins)
+from __future__ import annotations
+import numpy as np
+from .kernels_sw.hist import mutual_info_hist
 
-    if method == "ksg":
-        from itpu.kernels_sw.ksg import ksg_mi_estimate
-        mi, _ = ksg_mi_estimate(x, y, k=k, metric=metric)
-        return mi
+class ITPU:
+    """Information-Theoretic Processing Unit interface."""
+    
+    def __init__(self, device: str = "software"):
+        if device not in ("software",):
+            raise ValueError("Only 'software' backend available in v0.1")
+        self.device = device
 
-    raise ValueError(f"Unknown method: {method}")
+    def mutual_info(self, x, y, method: str = "hist", **kwargs):
+        """
+        Compute mutual information between x and y.
+        
+        Parameters:
+            x, y: 1D arrays
+            method: "hist" (only option in v0.1)
+            **kwargs: passed to underlying implementation
+            
+        Returns:
+            float: MI in nats
+        """
+        if method == "hist":
+            mi, _ = mutual_info_hist(x, y, **kwargs)
+            return mi
+        else:
+            raise NotImplementedError("Only method='hist' available in v0.1")
+
+# Convenience function
+def mutual_info(x, y, **kwargs):
+    """Compute mutual information (convenience function)."""
+    return mutual_info_hist(x, y, **kwargs)[0]

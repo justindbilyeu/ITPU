@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Verify KSG Chebyshev metric and null bias",
+    "body": "Add unit tests ensuring KSG uses Chebyshev (∞) metric and strict `< ε` marginal counting. Validate against Gaussian analytic MI and assert null MI < 0.05.\n\n**Tasks**\n- [ ] Create `tests/test_ksg_metric_and_nulls.py`\n- [ ] Parametrize ρ ∈ {0.3, 0.6, 0.9}, k ∈ {3,5,7,10}\n- [ ] Assert analytic MI ≈ KSG MI (±0.1)\n- [ ] Assert null MI < 0.05\n\n**Acceptance**\n`pytest -q` passes; failure if metric/counting regresses.",
+    "labels": ["tests", "R1", "correctness"]
+  },
+  {
+    "title": "CI matrix + benchmark artifact",
+    "body": "Upgrade CI to run tests on Ubuntu + Windows for Python 3.10/3.11, enforce runtime guard, and upload benchmark CSV.\n\n**Tasks**\n- [ ] Update `.github/workflows/ci.yml`\n- [ ] Cache pip\n- [ ] Run `benchmarks/mi_grid.py`, fail if > 90s on Ubuntu 3.11\n- [ ] Upload `mi_grid.csv` as artifact\n\n**Acceptance**\nCI green, runtime < 10 min, artifact available.",
+    "labels": ["ci", "benchmarks", "R1"]
+  },
+  {
+    "title": "IAAFT + block surrogates",
+    "body": "Implement surrogate generators with correctness tests.\n\n**Tasks**\n- [ ] Add `itpu/stats/surrogates.py` (`iaaft_surrogate`, `block_shuffle`)\n- [ ] Add `tests/test_surrogates.py`\n- [ ] IAAFT: spectrum RMSE ≤ 1e-3 vs original; rank-order correlation ~1.0\n- [ ] Block shuffle: preserves ACF up to block_size/2 vs full shuffle\n\n**Acceptance**\nAll surrogate tests pass.",
+    "labels": ["WS3", "statistics", "R1"]
+  },
+  {
+    "title": "Permutation harness + BH-FDR",
+    "body": "Add statistical testing utilities for WS3/WS5.\n\n**Tasks**\n- [ ] Create `itpu/stats/permutation.py` (`perm_test`)\n- [ ] Create `itpu/stats/fdr.py` (`fdr_bh`)\n- [ ] Add `tests/test_stats.py`\n- [ ] Validate p-value behavior and FDR monotonicity; reproducible with seed\n\n**Acceptance**\nTests pass; functions documented in `docs/api.md`.",
+    "labels": ["WS3", "statistics", "R1"]
+  },
+  {
+    "title": "Nested CV decoding (leakage-proof) with AUC",
+    "body": "Leakage-proof nested AUC pipeline for decoding analysis.\n\n**Tasks**\n- [ ] Create `itpu/decoding/nested.py`\n- [ ] Pipeline: StandardScaler → PCA (tuned) → LogisticRegression (tuned)\n- [ ] Tune only in inner CV; fit on outer-train; eval on outer-test\n- [ ] Tests on synthetic separable data (AUC > 0.8)\n- [ ] Leakage test that intentionally outperforms (documented) while default remains safe\n\n**Acceptance**\nTests pass; code clearly separates inner/outer; API documented in `docs/api.md`.",
+    "labels": ["WS3", "decoding", "R1"]
+  },
+  {
+    "title": "Benchmark grid + plotting",
+    "body": "Automate MI grid benchmark and plotting.\n\n**Tasks**\n- [ ] Enhance `benchmarks/mi_grid.py` to write CSV\n- [ ] Add `benchmarks/plot_mi_grid.py` (matplotlib) plotting MI vs analytic across rhos/ns and null MI\n- [ ] Create `benchmarks/README.md` with sample figure\n\n**Acceptance**\nPlots saved to `benchmarks/img/`; doc shows sample figure.",
+    "labels": ["benchmarks", "docs", "R1"]
+  },
+  {
+    "title": "Windowed MI dashboard helper",
+    "body": "Add plotting utility and example demo.\n\n**Tasks**\n- [ ] Create `itpu/utils/windowed_plot.py` (`plot_windowed_mi`)\n- [ ] Add `examples/windowed_demo.py` producing a PNG and summary stats\n\n**Acceptance**\nDemo runs; PNG generated; no seaborn (pure matplotlib).",
+    "labels": ["usability", "visualization", "R1"]
+  },
+  {
+    "title": "API docstrings + MkDocs skeleton",
+    "body": "Polish docs and add mkdocs skeleton.\n\n**Tasks**\n- [ ] Add docstrings to SDK, utils, stats, decoding\n- [ ] Add `mkdocs.yml`, `docs/index.md`\n- [ ] Add `docs/benchmarks.md`, `docs/testing.md`\n\n**Acceptance**\n`mkdocs build` runs; docs include testing strategy and API examples.",
+    "labels": ["docs", "R1"]
+  },
+  {
+    "title": "README Quickstart tightening",
+    "body": "Update README for reproducibility and working commands.\n\n**Tasks**\n- [ ] Add venv activation instructions for Windows/Mac\n- [ ] Show `pip install -e .[dev]` (fallback to minimal if extras missing)\n- [ ] One-liner to run tests + smoke\n- [ ] Link to docs pages (API, kernels, benchmarks)\n\n**Acceptance**\nREADME instructions work on a fresh clone.",
+    "labels": ["docs", "R1"]
+  },
+  {
+    "title": "Developer extras + lint CI",
+    "body": "Improve developer ergonomics.\n\n**Tasks**\n- [ ] Add `extras_require` in `pyproject.toml` (`dev`)\n- [ ] Add `.ruff.toml` (or flake8) and `.github/workflows/lint.yml`\n\n**Acceptance**\nCI runs lint + tests; fails on style errors.",
+    "labels": ["ci", "devx", "R1"]
+  },
+  {
+    "title": "MI CLI tool",
+    "body": "Command-line MI computation for CSV input.\n\n**Tasks**\n- [ ] Add `scripts/itpu_mi_cli.py` supporting `--method hist|ksg`, `--bins`, `--k`, `--x-col`, `--y-col`\n- [ ] Print MI (nats) and write JSON metadata (rho estimate, method, params)\n\n**Acceptance**\nCLI runs on synthetic CSV; `--help` shows options.",
+    "labels": ["usability", "tools", "R1"]
+  },
+  {
+    "title": "Profiling hooks (FPGA prep)",
+    "body": "Add profiling scripts for performance hotspots.\n\n**Tasks**\n- [ ] Create `benchmarks/profile_hist.py` and `benchmarks/profile_knn.py` using `perf_counter_ns()`\n- [ ] Document results in `docs/kernels/PROFILE_NOTES.md`\n\n**Acceptance**\nScripts run and print timings; docs summarize hotspots and parameters.",
+    "labels": ["benchmarks", "fpga", "R2"]
+  }
+]

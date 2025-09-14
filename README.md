@@ -1,6 +1,8 @@
+Got it—here’s a tightened, software-first, research-aligned README you can paste over your current one. I emphasized our current star: the WS1→WS3 stack (phenomenology → information-theory pipelines), with IAAFT/block surrogates, nested CV decoding, and a clean hand-off to future hardware.
+
 # Information-Theoretic Processing Unit (ITPU)
 
-**Accelerate entropy, mutual information (MI), and k-NN–based estimators — software today, designed for hardware tomorrow.**
+**Accelerate entropy, mutual information (MI), and k-NN–based estimators — software today, hardware tomorrow.**
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Status](https://img.shields.io/badge/status-pre--alpha-orange.svg)](https://github.com)
@@ -9,192 +11,163 @@
 
 ---
 
-## ITPU, in one line
-
-Most computers are great at multiplying matrices—and bad at **measuring information**. ITPU flips that: it makes entropy, mutual information, and k-NN statistics fast and **streamable**, so you can see **information flow in real time**.
-
----
-
-## Why This Matters
-
-**Neuroscientists** wait hours to analyze brain recordings that should update in real time. A paralyzed patient testing a BCI can't get feedback fast enough to learn control efficiently.
-
-**Medical researchers** miss patterns in high-dimensional data because finding information relationships across thousands of variables is computationally painful.
-
-**AI teams** ship powerful models without tools to see how information actually flows between components as they reason.
-
-**The core problem:** Today's computers excel at matrix math but struggle to *measure information itself*—entropy, mutual information (MI), and related statistics that reveal how systems work. These workloads are **irregular** and **memory-intensive**, so they don't map well to standard accelerators.
-
-**Current tools often fall short:**
-- CPUs are too slow for real-time use
-- GPUs are often inefficient on branchy, irregular operations
-- Existing libraries force trade-offs between speed, accuracy, and streaming
-- Few options support true *real-time* information analysis
-
-**What becomes possible with fast information processing:**
-- BCIs that adapt within milliseconds
-- Medical imaging that registers scans during surgery
-- AI systems with live information-flow readouts
-- Discovery workflows that surface correlations previously buried by compute limits
-- Instruments that adjust experiments on the fly based on information content
+## ITPU in one line
+Most computers are great at multiplying matrices—and bad at **measuring information**. ITPU flips that: it makes entropy, MI, and k-NN statistics fast and **streamable**, so you can see **information flow in real time**.
 
 ---
 
-## What is ITPU
+## What’s new (focus of the project right now)
 
-Modern chips are great at matrix math (good for neural nets) but bad at measuring information itself. Many real problems—BCI/neuroscience, medical image registration, causal discovery—need **entropy/MI** and **k-NN statistics** fast and in **streaming** form.
+**The current star is WS1→WS3:** reliable phenomenology labels feeding rigorously controlled information-theory analysis.
 
-**ITPU** is a coprocessor concept *and* an SDK: we're shipping a **software SDK now** (with the same API you'll use on a future FPGA/ASIC), so you can profile information flow today and drop in hardware later **without changing code**.
+- **WS1 (Phenomenology) starter kit**  
+  `docs/ITPU_patch/code/phenomenology/coding_manual.md` — operational definitions (lattice/tunnel/spiral), boundary rules, κ/ICC procedures.  
+  `docs/ITPU_patch/code/phenomenology/phenom_tools.py` — compute **Cohen’s κ** & **ICC**; optional `docs/ITPU_patch/notebooks/ws1_pilot.ipynb`.
+
+- **WS3 (Information Theory) software-first**  
+  - **Histogram MI** for streaming dashboards (stable).  
+  - **KSG MI (k-NN)** experimental path (software baseline for later acceleration).  
+  - Roadmapped now: **IAAFT & block surrogates**, **permutation tests**, **FDR**, and **nested CV decoding** to prevent leakage.
+
+- **Hardware later, unchanged API**  
+  We validate kernels & user needs in software, then lift the **same API** to FPGA/ASIC.
 
 ---
 
-## Status: Software-First (Sept 2025)
+## Why this matters
 
-- ✅ **Working now:** histogram-based MI (`method="hist"`), sliding-window / streaming helpers
-- 🧪 **Experimental:** KSG MI (`method="ksg"`, k-NN estimator) and windowed KSG; benchmarking suite; EEG demo
-- 🧭 **Road to hardware:** validate kernels + users in software → lift the exact API onto an FPGA pathfinder
+- **Neuroscience & BCIs:** real-time feedback from information flow (not hours-later batch jobs).  
+- **Clinical & scientific workflows:** detect structure in high-dimensional signals with correct nulls (surrogates) and multiple-comparison control.  
+- **AI systems:** live info-flow readouts and causal sanity checks beyond matrix ops.
+
+Today’s accelerators excel at dense GEMMs; **MI/entropy/k-NN** are irregular and memory-bound. ITPU optimizes the **dataflow** those workloads need.
+
+---
+
+## Status (Sept 2025)
+
+- ✅ **Working now:** histogram-based MI (nats), sliding/windowed helpers, SDK entry points.  
+- 🧪 **Experimental:** KSG MI (k-NN) + windowed variants; EEG demo.  
+- 🚧 **In progress (starred):** WS1 κ pilot; WS3 surrogates (IAAFT/block) + nested CV decoding.  
+- 🧭 **Next hardware step:** lift the exact API onto an FPGA pathfinder once WS3 passes prereg gates.
 
 ---
 
 ## Quickstart
 
-> **"Repo root"** = the folder that contains `README.md` and the `itpu/` directory.
+> **Repo root** = folder with `README.md` (and `itpu/`).
 
 ```bash
-# 1) Clone and enter the repo root
+# 1) Clone & enter
 git clone https://github.com/justindbilyeu/ITPU
 cd ITPU
 
-# 2) (Recommended) Create & activate a virtual environment
+# 2) (Recommended) venv
 python -m venv .venv
-
 # macOS/Linux:
 source .venv/bin/activate
-
 # Windows (PowerShell):
 # .venv\Scripts\Activate.ps1
 
-# 3) Install minimal dependencies
+# 3) Minimal deps
 pip install numpy scipy matplotlib
 
-# 4) Run a smoke test
+# 4) Smoke test
 python scripts/smoke_test.py
-# You should see a non-zero MI and a count of sliding-window results.
+# Expect a non-zero MI and a count of sliding-window outputs.
 
-# 5) (Optional) Try the EEG streaming demo if present
-# python examples/eeg_streaming_demo.py
-```
 
------
+⸻
 
-## Minimal API
+Minimal API
 
-```python
 from itpu.sdk import ITPU
 from itpu.utils.windowed import windowed_mi
 import numpy as np
 
-itpu = ITPU(device="software")  # same API will target FPGA later
+itpu = ITPU(device="software")   # same API will target FPGA later
 
-# Example: point MI (histogram method)
+# Point MI (histogram method)
 x = np.random.randn(50_000)
 y = 0.6*x + 0.4*np.random.randn(50_000)
-mi = itpu.mutual_info(x, y, method="hist", bins=64)  # MI in nats
+mi = itpu.mutual_info(x, y, method="hist", bins=64)   # nats
 
 # Sliding-window MI (hist)
 starts, mi_vals = windowed_mi(x, y, window_size=2000, hop_size=400, bins=64)
 
-# KSG (k-NN) estimator (experimental; once merged)
-# mi_ksg = itpu.mutual_info(x, y, method="ksg", k=5)  # MI in nats
-```
+# KSG (experimental)
+# mi_ksg = itpu.mutual_info(x, y, method="ksg", k=5)
 
-**Methods:**
+Units: MI in nats (divide by np.log(2) for bits).
 
-- **Histogram MI:** fast, discrete approximation (good for streaming & dashboards)
-- **KSG MI:** non-parametric continuous estimator (Kraskov–Stögbauer–Grassberger, variant I)
+⸻
 
-**Units:** MI is reported in nats (divide by `np.log(2)` for bits).
+Research alignment (WS1–WS6)
+	•	WS1 Phenomenology → labels with κ ≥ 0.6
+Use the coding manual + tools in docs/ITPU_patch/... to run a κ pilot. No reliable labels → no WS3 Go.
+	•	WS3 Information Theory (current star)
+MI (hist/KSG), IAAFT/block surrogates, permutation tests, FDR, and nested CV decoding (AUC with CIs).
+	•	WS5 TDA / WS4 Dynamics / WS6 Models
+Out of scope for the current sprint, but the SDK is being shaped so topological/dynamical metrics and toy models can plug in next.
 
------
+Go/No-Go gates (prereg discipline):
+	•	κ ≥ 0.6 (WS1) and any of: AUC ≥ 0.70 (out-of-subject, nested CV), or O-info/PID class differences (q < 0.05 vs surrogates), or robust TDA differences.
 
-## What’s in This Repo Today
+⸻
 
-- `itpu/kernels_sw/hist.py` — software histogram & entropy primitives
-- `itpu/kernels_sw/ksg.py` — experimental KSG estimator + windowed helper
-- `itpu/sdk.py` — device-agnostic API (device=“software” now; “fpga” later)
-- `itpu/utils/windowed.py` — sliding/streaming utilities
-- `scripts/smoke_test.py` — quick correctness check
-- `examples/eeg_streaming_demo.py` — EEG MI timeseries demo (local CSV or synthetic fallback)
-- `benchmarks/` — apples-to-apples comparisons vs SciPy/scikit-learn (coming online)
+What’s in this repo (today)
+	•	itpu/kernels_sw/hist.py — histogram & entropy primitives
+	•	itpu/kernels_sw/ksg.py — experimental KSG estimator + windowed helper
+	•	itpu/sdk.py — device-agnostic API (device="software" now; "fpga" later)
+	•	itpu/utils/windowed.py — sliding/streaming utilities
+	•	scripts/smoke_test.py — quick correctness check
+	•	examples/eeg_streaming_demo.py — EEG MI timeseries demo (if present)
+	•	benchmarks/ — comparisons vs SciPy/scikit-learn (rolling online)
 
------
+Docs (WS1 kit):
+	•	docs/ITPU_patch/code/phenomenology/coding_manual.md
+	•	docs/ITPU_patch/code/phenomenology/phenom_tools.py
+	•	docs/ITPU_patch/notebooks/ws1_pilot.ipynb (optional training aid)
 
-## Benchmarks (Tracking)
+⸻
 
-We’re adding benchmarks/ to compare ITPU software vs. SciPy/scikit-learn/JIDT on identical data:
+Roadmap
+	•	R1 (now): histogram MI + sliding windows; WS1 κ pilot materials; clean docs
+	•	R2 (next): KSG MI hardening; IAAFT/block surrogates; permutation+FDR; nested CV decoding
+	•	R3: batched MI matrices, categorical MI, optional CuPy acceleration
+	•	R4: FPGA pathfinder (same SDK API) with end-to-end streaming demo
+	•	R5: ASIC decision contingent on verified demand + performance
 
-- Throughput for histogram MI
-- Latency for sliding windows
-- Accuracy vs. known MI for synthetic distributions
+⸻
 
-**Early goalposts:** ≥2–5× faster histogram MI on common sizes and first-class streaming others lack.
+Benchmarks (tracking)
 
------
+We’re adding apples-to-apples comparisons vs SciPy/scikit-learn/JIDT:
+	•	Throughput (histogram MI), sliding-window latency
+	•	Accuracy vs analytic/synthetic ground truths
+	•	Streaming stability under load
 
-## Roadmap
+Early goalpost: ≥2–5× faster histogram MI on common sizes + first-class streaming others lack.
 
-- **R1 (now):** histogram MI + sliding windows, smoke tests, clean docs
-- **R2 (next):** KSG MI (ksg_mi_estimate), comprehensive benchmarks, EEG streaming demo
-- **R3:** convenience APIs (batched MI matrices, masks, categorical MI), optional CuPy acceleration
-- **R4:** FPGA pathfinder spec + sizing; BCI partner pilots
-- **R5:** ASIC decision (only after proven demand + performance)
+⸻
 
------
+Contributing
 
-## Examples & Demos
+PRs welcome—high-leverage areas right now:
+	•	KSG estimator tests & correctness
+	•	Streaming/windowing utilities
+	•	Surrogates (IAAFT/block) + permutation/FDR scaffolding
+	•	Nested CV decoding (leakage-safe PCA; AUC CIs)
 
-- `scripts/smoke_test.py` — quick sanity check
-- `examples/eeg_streaming_demo.py` — streaming MI on EEG (eyes open/closed), with synthetic fallback
-- `benchmarks/compare_baselines.py` — apples-to-apples against popular libs (coming online)
+Dev tips:
 
------
+pytest -q          # test suite (as it comes online)
+# please pin deps in any new modules and include minimal examples
 
-## FAQ
 
-**Why not just use a GPU?**
-GPUs crush dense matrices; MI/k-NN are irregular and memory-bound. We optimize dataflow for histograms and neighbor counts, offer true streaming, and then port exactly that to hardware.
+⸻
 
-**Do I need special hardware?**
-No. Today is pure Python/NumPy/SciPy. The same code will target an FPGA card later.
+License
 
-**Bits or nats?**
-We return nats. For bits, divide by `np.log(2)`.
+Apache-2.0 — see LICENSE.
 
------
-
-## Contributing
-
-Issues and PRs welcome! High-leverage areas:
-
-- KSG estimator internals and tests (`itpu/kernels_sw/ksg.py`)
-- Streaming/windowing utilities
-- Benchmarks and real-world datasets (EEG/BCI preferred for now)
-
-**Dev tips:**
-
-```bash
-# From repo root
-# If a dev requirements file exists:
-# pip install -r requirements-dev.txt
-pytest -q  # test suite (coming online)
-```
-
------
-
-## License
-
-Apache-2.0 — see <LICENSE>.
-
-```
-
-```

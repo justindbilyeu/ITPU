@@ -1,3 +1,28 @@
+# top of file
+from sklearn.neighbors import NearestNeighbors
+
+def _mi_ksg(x, y, k=5):
+    x = np.asarray(x).reshape(-1, 1)
+    y = np.asarray(y).reshape(-1, 1)
+    n = x.shape[0]
+    if n != y.shape[0]:
+        raise ValueError("x,y length mismatch")
+    if k <= 0 or k >= n:
+        raise ValueError("k must be in [1, n-1)")
+
+    xy = np.hstack([x, y])
+
+    # kNN in joint space with Chebyshev (∞) norm (KSG-1 requirement)
+    nn = NearestNeighbors(n_neighbors=k+1, metric="chebyshev", n_jobs=-1)
+    nn.fit(xy)
+    dists, _ = nn.kneighbors(xy, return_distance=True)
+    eps = dists[:, -1]  # k-th neighbor radius
+
+    nx = _count_within_radius_1d(x.ravel(), eps, strict=True)
+    ny = _count_within_radius_1d(y.ravel(), eps, strict=True)
+
+    from scipy.special import digamma  # prefer SciPy’s digamma
+    return float(np.mean(digamma(k) - digamma(nx + 1) - digamma(ny + 1) + digamma(n)))
 # itpu/sdk.py
 import numpy as np
 from math import log

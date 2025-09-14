@@ -23,3 +23,14 @@ jobs:
           pip install pytest numpy scipy scikit-learn
       - name: Run tests
         run: pytest -q
+        
+
+  run: |
+    python - <<'PY'
+    import os
+    os.environ["MPLBACKEND"]="Agg"
+    from examples.eeg_realtime_dashboard import BenchmarkComparison
+    bc = BenchmarkComparison()
+    bc.run(duration_s=10, n_channels=6, fs=200)
+    print("EEG benchmark smoke: OK")
+    PY

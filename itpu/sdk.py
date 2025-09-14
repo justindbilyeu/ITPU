@@ -1,69 +1,16 @@
-# top of file
-from sklearn.neighbors import NearestNeighbors
+"""Core SDK providing mutual information utilities."""
 
-def _mi_ksg(x, y, k=5):
-    x = np.asarray(x).reshape(-1, 1)
-    y = np.asarray(y).reshape(-1, 1)
-    n = x.shape[0]
-    if n != y.shape[0]:
-        raise ValueError("x,y length mismatch")
-    if k <= 0 or k >= n:
-        raise ValueError("k must be in [1, n-1)")
+from __future__ import annotations
 
-    xy = np.hstack([x, y])
-
-    # kNN in joint space with Chebyshev (∞) norm (KSG-1 requirement)
-    nn = NearestNeighbors(n_neighbors=k+1, metric="chebyshev", n_jobs=-1)
-    nn.fit(xy)
-    dists, _ = nn.kneighbors(xy, return_distance=True)
-    eps = dists[:, -1]  # k-th neighbor radius
-
-    nx = _count_within_radius_1d(x.ravel(), eps, strict=True)
-    ny = _count_within_radius_1d(y.ravel(), eps, strict=True)
-
-    from scipy.special import digamma  # prefer SciPy’s digamma
-    return float(np.mean(digamma(k) - digamma(nx + 1) - digamma(ny + 1) + digamma(n)))
-# itpu/sdk.py
 import numpy as np
-from math import log
-from scipy.spatial import cKDTree
+from typing import Iterable, Tuple, Dict, Union
+
+from .kernels_sw.ksg import ksg_mi_estimate
 
 __all__ = ["ITPU"]
 
-class ITPU:
-    """
-    Device-agnostic API. device="software" supported now; future targets will
-    preserve this interface.
-    """
 
-    def __init__(self, device="software"):
-        if device != "software":
-            raise NotImplementedError("Only device='software' is supported today.")
-        self.device = device
-
-    # ---------- Public API ----------
-    def mutual_info(self, x, y, method="hist", **kwargs):
-        """
-        Mutual information between 1D arrays x,y (nats).
-        method: "hist" (discrete/histogram) or "ksg" (continuous kNN).
-        """
-        x = np.asarray(x).ravel()
-        y = np.asarray(y).ravel()
-        if x.shape != y.shape:
-            raise ValueError("x and y must have same length.")
-
-        if method == "hist":
-            bins = int(kwargs.get("bins", 64))
-            return _mi_hist(x, y, bins=bins)
-        elif method == "ksg":
-            k = int(kwargs.get("k", 5))
-            return _mi_ksg(x, y, k=k)
-        else:
-            raise ValueError(f"Unknown method: {method}")
-
-# ---------- Histogram-based MI (nats) ----------
-def _entropy_from_hist(counts):
-    # counts: nonnegative, sum > 0
+def _entropy_from_hist(counts: np.ndarray) -> float:
     p = counts.astype(float)
     total = p.sum()
     if total <= 0:
@@ -72,86 +19,108 @@ def _entropy_from_hist(counts):
     p = p[p > 0]
     return float(-(p * np.log(p)).sum())
 
-def _mi_hist(x, y, bins=64):
-    # 1D histograms
+
+def _mi_hist(x: np.ndarray, y: np.ndarray, bins: int = 64) -> Tuple[float, float, float, float]:
     hx, _ = np.histogram(x, bins=bins)
     hy, _ = np.histogram(y, bins=bins)
-    # 2D joint histogram
     hxy, _, _ = np.histogram2d(x, y, bins=bins)
 
     Hx = _entropy_from_hist(hx)
     Hy = _entropy_from_hist(hy)
-    Hxy = _entropy_from_hist(hxy)  # flatten ok in helper
+    Hxy = _entropy_from_hist(hxy)
 
-    return Hx + Hy - Hxy
+    mi_raw = Hx + Hy - Hxy
+    kx = np.count_nonzero(hx)
+    ky = np.count_nonzero(hy)
+    kxy = np.count_nonzero(hxy)
+    bias = ((kx - 1) * (ky - 1) - (kxy - 1)) / (2 * len(x))
+    mi = float(max(mi_raw - bias, 0.0))
+    Hxy_corr = Hxy + bias
+    return mi, Hx, Hy, Hxy_corr
 
-# ---------- KSG (Kraskov-Stögbauer-Grassberger) MI (nats), variant 1 ----------
-# Minimal, dependency-light implementation for 1D x,y.
-# Uses Chebyshev (infinity) norm in joint space, digamma via scipy.special if available
-try:
-    from scipy.special import digamma
-except Exception:
-    # simple fallback: harmonic approximation
-    def digamma(n):
-        # Euler–Mascheroni gamma ~0.57721
-        if n <= 0:
-            raise ValueError("digamma requires n>0 in this fallback.")
-        return -0.5772156649015329 + sum(1.0/i for i in range(1, int(n)))
 
-def _mi_ksg(x, y, k=5):
-    """
-    KSG-1 estimator for continuous MI in nats.
-    """
-    x = np.asarray(x).reshape(-1, 1)
-    y = np.asarray(y).reshape(-1, 1)
-    n = x.shape[0]
-    if n != y.shape[0]:
-        raise ValueError("x,y length mismatch")
-    if k <= 0 or k >= n:
-        raise ValueError("k must be in [1, n-1)")
+class ITPU:
+    """Device-agnostic API for mutual information computations."""
 
-    # Joint space with Chebyshev (max) norm via KDTree by duplicating dims and using max radius
-    xy = np.hstack([x, y])
-    tree_joint = cKDTree(xy)
-    # Distance to k-th neighbor in joint space (Chebyshev approximated by max of |dx|,|dy|)
-    # We emulate Chebyshev by querying in Euclidean but we will count marginals strictly less than eps.
-    # Query k+1 because point itself counts as neighbor.
-    dists, _ = tree_joint.query(xy, k=k+1, workers=-1)
-    eps = dists[:, -1]  # radius to k-th neighbor
+    def __init__(self, device: str = "software") -> None:
+        if device != "software":
+            raise NotImplementedError("Only device='software' is supported today.")
+        self.device = device
 
-    # Count neighbors in marginals within strictly less than eps (avoid boundary double counts)
-    nx = _count_within_radius_1d(x, eps, strict=True)
-    ny = _count_within_radius_1d(y, eps, strict=True)
+    def mutual_info(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        method: str = "hist",
+        output: str = "mi",
+        **kwargs,
+    ) -> Union[float, Tuple[float, float, float], Dict[str, float]]:
+        """Mutual information between 1D arrays ``x`` and ``y``.
 
-    # KSG-1 formula (nats)
-    # I = psi(k) - <psi(nx+1)+psi(ny+1)> + psi(n)  (with digamma)
-    term = np.mean(digamma(k) - digamma(nx + 1) - digamma(ny + 1) + digamma(n))
-    return float(term)
+        Parameters
+        ----------
+        x, y : array-like
+            Input vectors of equal length.
+        method : {"hist", "ksg"}
+            Estimation method.
+        output : {"mi", "entropies", "all"}
+            Output format for histogram method. KSG only supports "mi".
+        """
+        x = np.asarray(x).ravel()
+        y = np.asarray(y).ravel()
+        if x.shape != y.shape:
+            raise ValueError("x and y must have same length.")
 
-def _count_within_radius_1d(x, eps, strict=True):
-    """
-    For each point i, count number of other samples whose |x_j - x_i| < eps_i (strict) or <= eps_i.
-    Returns counts excluding the point itself.
-    """
-    x = np.asarray(x).ravel()
-    n = x.shape[0]
-    # Sort to enable sliding window counts
-    order = np.argsort(x)
-    xs = x[order]
-    counts = np.empty(n, dtype=int)
+        if method == "hist":
+            bins = int(kwargs.get("bins", 64))
+            mi, Hx, Hy, Hxy = _mi_hist(x, y, bins=bins)
+            if output == "mi":
+                return mi
+            elif output == "entropies":
+                return {"Hx": Hx, "Hy": Hy, "Hxy": Hxy}
+            elif output == "all":
+                return {"mi": mi, "Hx": Hx, "Hy": Hy, "Hxy": Hxy}
+            else:
+                raise ValueError("Unknown output option")
+        elif method == "ksg":
+            k = int(kwargs.get("k", 5))
+            metric = kwargs.get("metric", "chebyshev")
+            mi, _ = ksg_mi_estimate(x, y, k=k, metric=metric)
+            if output == "mi":
+                return mi
+            elif output in ("entropies", "all"):
+                raise NotImplementedError("Entropy outputs not supported for KSG")
+            else:
+                raise ValueError("Unknown output option")
+        else:
+            raise ValueError(f"Unknown method: {method}")
 
-    j_left = 0
-    for idx, i in enumerate(order):
-        xi = xs[idx]
-        # expand left boundary
-        while j_left < n and (xi - xs[j_left] > eps[i] if strict else xi - xs[j_left] >= eps[i]):
-            j_left += 1
-        # expand right boundary
-        j_right = idx + 1
-        while j_right < n and (xs[j_right] - xi < eps[i] if strict else xs[j_right] - xi <= eps[i]):
-            j_right += 1
-        # total in (left,right) minus 1 (exclude self)
-        counts[i] = (j_right - j_left) - 1
-    # clamp minimum 0
-    counts[counts < 0] = 0
-    return counts
+    def mutual_info_matrix(
+        self,
+        X: np.ndarray,
+        method: str = "hist",
+        bins: int = 64,
+        pairs: Union[str, Iterable[Tuple[int, int]]] = "all",
+        mask: np.ndarray | None = None,
+    ) -> Union[np.ndarray, Dict[Tuple[int, int], float]]:
+        """Pairwise mutual information matrix for columns of ``X``."""
+        X = np.asarray(X)
+        if X.ndim != 2:
+            raise ValueError("X must be 2D")
+        if mask is not None:
+            X = X[np.asarray(mask, dtype=bool)]
+        n_features = X.shape[1]
+
+        if pairs == "all":
+            M = np.zeros((n_features, n_features), dtype=float)
+            for i in range(n_features):
+                for j in range(i + 1, n_features):
+                    mi = self.mutual_info(X[:, i], X[:, j], method=method, bins=bins)
+                    M[i, j] = M[j, i] = mi
+            return M
+        else:
+            out: Dict[Tuple[int, int], float] = {}
+            for i, j in pairs:
+                mi = self.mutual_info(X[:, i], X[:, j], method=method, bins=bins)
+                out[(i, j)] = mi
+            return out

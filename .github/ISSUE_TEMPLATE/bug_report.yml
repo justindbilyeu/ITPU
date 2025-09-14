@@ -1,0 +1,380 @@
+# .github/ISSUE_TEMPLATE/bug_report.yml
+
+# Bug report template
+
+name: Bug Report
+description: Report a bug or issue with ITPU
+title: “[BUG] “
+labels: [“bug”, “triage”]
+body:
+
+- type: markdown
+  attributes:
+  value: |
+  Thanks for taking the time to report a bug! Please fill out the information below to help us debug the issue.
+- type: textarea
+  id: description
+  attributes:
+  label: Bug Description
+  description: A clear and concise description of what the bug is.
+  placeholder: Describe the bug…
+  validations:
+  required: true
+- type: textarea
+  id: reproduce
+  attributes:
+  label: Steps to Reproduce
+  description: Steps to reproduce the behavior
+  placeholder: |
+  1. Import ITPU with ‘…’
+  2. Call function ‘…’
+  3. See error
+  validations:
+  required: true
+- type: textarea
+  id: expected
+  attributes:
+  label: Expected Behavior
+  description: What you expected to happen
+  validations:
+  required: true
+- type: textarea
+  id: actual
+  attributes:
+  label: Actual Behavior
+  description: What actually happened (including error messages)
+  validations:
+  required: true
+- type: textarea
+  id: environment
+  attributes:
+  label: Environment
+  description: Your environment information
+  placeholder: |
+  - OS: [e.g. Ubuntu 20.04, Windows 10, macOS 12]
+  - Python: [e.g. 3.9.7]
+  - ITPU version: [e.g. 0.1.0-alpha]
+  - NumPy version: [e.g. 1.21.0]
+  - SciPy version: [e.g. 1.7.0]
+  - Other relevant packages:
+  validations:
+  required: true
+- type: textarea
+  id: code
+  attributes:
+  label: Minimal Code Example
+  description: Minimal code to reproduce the issue
+  render: python
+  placeholder: |
+  import numpy as np
+  from itpu.sdk import ITPU
+  
+  ```
+  # Your code here
+  ```
+  
+  validations:
+  required: false
+- type: textarea
+  id: additional
+  attributes:
+  label: Additional Context
+  description: Any other context about the problem (logs, screenshots, etc.)
+  validations:
+  required: false
+
+-----
+
+# .github/ISSUE_TEMPLATE/feature_request.yml
+
+# Feature request template
+
+name: Feature Request
+description: Suggest a new feature or enhancement for ITPU
+title: “[FEATURE] “
+labels: [“enhancement”, “triage”]
+body:
+
+- type: markdown
+  attributes:
+  value: |
+  Thanks for suggesting a new feature! Please provide details about what you’d like to see added.
+- type: textarea
+  id: summary
+  attributes:
+  label: Feature Summary
+  description: A clear and concise description of the feature you’re requesting
+  placeholder: Describe the feature…
+  validations:
+  required: true
+- type: textarea
+  id: problem
+  attributes:
+  label: Problem Statement
+  description: What problem does this feature solve? What’s the motivation?
+  placeholder: This feature would solve…
+  validations:
+  required: true
+- type: textarea
+  id: solution
+  attributes:
+  label: Proposed Solution
+  description: Describe the solution you’d like to see
+  placeholder: I would like…
+  validations:
+  required: true
+- type: textarea
+  id: alternatives
+  attributes:
+  label: Alternatives Considered
+  description: Alternative solutions or features you’ve considered
+  placeholder: I also considered…
+  validations:
+  required: false
+- type: dropdown
+  id: category
+  attributes:
+  label: Feature Category
+  description: Which area does this feature relate to?
+  options:
+  - Core MI/Entropy algorithms
+  - Streaming/Real-time processing
+  - Performance optimization
+  - Hardware acceleration
+  - API/SDK design
+  - Documentation
+  - Benchmarking
+  - Examples/Demos
+  - Other
+  validations:
+  required: true
+- type: dropdown
+  id: priority
+  attributes:
+  label: Priority Level
+  description: How important is this feature to you?
+  options:
+  - Nice to have
+  - Would be helpful
+  - Important for my use case
+  - Critical/Blocking
+  validations:
+  required: true
+- type: textarea
+  id: use_case
+  attributes:
+  label: Use Case
+  description: Describe your specific use case for this feature
+  placeholder: I need this for…
+  validations:
+  required: false
+- type: textarea
+  id: additional
+  attributes:
+  label: Additional Context
+  description: Any other context, mockups, or examples
+  validations:
+  required: false
+
+-----
+
+# .github/ISSUE_TEMPLATE/partner_inquiry.yml
+
+# Partner inquiry template
+
+name: Partner Inquiry
+description: Interest in collaboration, early access, or hardware development
+title: “[PARTNER] “
+labels: [“partnership”, “triage”]
+body:
+
+- type: markdown
+  attributes:
+  value: |
+  Thanks for your interest in partnering with ITPU! Please provide details about your organization and use case.
+- type: input
+  id: organization
+  attributes:
+  label: Organization
+  description: Your organization name (university, company, lab, etc.)
+  placeholder: University of Example, Example Corp
+  validations:
+  required: true
+- type: input
+  id: role
+  attributes:
+  label: Your Role
+  description: Your position/role in the organization
+  placeholder: PhD Student, Research Scientist, CTO, etc.
+  validations:
+  required: true
+- type: dropdown
+  id: type
+  attributes:
+  label: Partnership Type
+  description: What type of collaboration are you interested in?
+  options:
+  - Early adopter program (software)
+  - FPGA prototype development
+  - Research collaboration
+  - Commercial licensing
+  - Custom kernel development
+  - Case study development
+  - Other
+  validations:
+  required: true
+- type: dropdown
+  id: domain
+  attributes:
+  label: Application Domain
+  description: Which domain best describes your use case?
+  options:
+  - Neuroscience/BCI
+  - Medical imaging
+  - Causal discovery/ML
+  - Quantum computing
+  - Signal processing
+  - Other scientific computing
+  - Commercial application
+  - Other
+  validations:
+  required: true
+- type: textarea
+  id: use_case
+  attributes:
+  label: Use Case Description
+  description: Describe your specific use case and requirements
+  placeholder: |
+  - What type of data do you work with?
+  - What MI/entropy calculations do you need?
+  - What are your performance requirements?
+  - What are your current pain points?
+  validations:
+  required: true
+- type: textarea
+  id: scale
+  attributes:
+  label: Scale and Performance Requirements
+  description: Data size, throughput, latency requirements
+  placeholder: |
+  - Data sizes: (e.g., 64 channels, 1000 Hz, 1-hour recordings)
+  - Throughput needs: (e.g., 100 MI calculations per second)
+  - Latency requirements: (e.g., <100ms for real-time feedback)
+  validations:
+  required: false
+- type: textarea
+  id: timeline
+  attributes:
+  label: Timeline
+  description: Your project timeline and when you’d need ITPU capabilities
+  placeholder: We’re looking to deploy by…
+  validations:
+  required: false
+- type: input
+  id: contact
+  attributes:
+  label: Contact Information
+  description: Best email for follow-up discussions
+  placeholder: your.email@organization.edu
+  validations:
+  required: true
+- type: textarea
+  id: additional
+  attributes:
+  label: Additional Information
+  description: Anything else you’d like us to know
+  validations:
+  required: false
+
+-----
+
+# .github/ISSUE_TEMPLATE/performance_issue.yml
+
+# Performance issue template
+
+name: Performance Issue
+description: Report slow performance or request optimization
+title: “[PERFORMANCE] “
+labels: [“performance”, “triage”]
+body:
+
+- type: markdown
+  attributes:
+  value: |
+  Help us improve ITPU performance! Please provide details about the performance issue.
+- type: textarea
+  id: description
+  attributes:
+  label: Performance Issue Description
+  description: Describe the performance problem
+  placeholder: Function X takes too long when…
+  validations:
+  required: true
+- type: textarea
+  id: benchmark
+  attributes:
+  label: Benchmark Results
+  description: Performance measurements (timing, memory usage, etc.)
+  placeholder: |
+  - Function: itpu.mutual_info()
+  - Data size: 100,000 samples, 16 channels
+  - Time taken: 5.2 seconds
+  - Expected time: <1 second
+  - Memory usage: 2GB
+  validations:
+  required: true
+- type: textarea
+  id: comparison
+  attributes:
+  label: Comparison with Alternatives
+  description: How does it compare to other tools?
+  placeholder: |
+  - SciPy implementation: 3.1 seconds
+  - scikit-learn: 4.2 seconds
+  - ITPU: 5.2 seconds (slower than expected)
+  validations:
+  required: false
+- type: textarea
+  id: environment
+  attributes:
+  label: Environment
+  description: Your system specifications
+  placeholder: |
+  - OS: Ubuntu 20.04
+  - CPU: Intel i7-9700K
+  - RAM: 32GB
+  - Python: 3.9.7
+  - ITPU version: 0.1.0-alpha
+  - NumPy: 1.21.0
+  - GPU: NVIDIA RTX 3080 (if relevant)
+  validations:
+  required: true
+- type: textarea
+  id: code
+  attributes:
+  label: Code Example
+  description: Minimal code to reproduce the performance issue
+  render: python
+  placeholder: |
+  import numpy as np
+  import time
+  from itpu.sdk import ITPU
+  
+  ```
+  # Your performance test code
+  ```
+  
+  validations:
+  required: false
+- type: dropdown
+  id: priority
+  attributes:
+  label: Impact Level
+  description: How much does this impact your work?
+  options:
+  - Minor inconvenience
+  - Noticeable slowdown
+  - Significant impact on workflow
+  - Blocking/unusable
+  validations:
+  required: true

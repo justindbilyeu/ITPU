@@ -1,4 +1,3 @@
-cat > itpu/__init__.py << 'EOF'
 # SPDX-License-Identifier: Apache-2.0
 """
 Information-Theoretic Processing Unit (ITPU)
@@ -11,4 +10,3 @@ from .sdk import ITPU
 from .utils.windowed import windowed_mi
 
 __all__ = ["ITPU", "windowed_mi"]
-EOF

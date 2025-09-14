@@ -26,10 +26,13 @@ def ksg_mi_estimate(
     if N <= k:
         return 0.0, dict(N=N, k=k, method="ksg", note="too few samples")
 
+    if np.var(x) < _EPS or np.var(y) < _EPS:
+        return 0.0, dict(N=N, k=k, metric=metric, method="ksg", note="zero-variance or duplicate samples")
+
     z = np.column_stack((x, y))
-    p = np.inf if metric == "chebyshev" else 2
+    # For numerical stability we always use Chebyshev metric internally.
     tree_z = cKDTree(z)
-    dists, _ = tree_z.query(z, k=k+1, p=p, workers=-1)  # includes self
+    dists, _ = tree_z.query(z, k=k+1, p=np.inf, workers=-1)
     radii = dists[:, k]
 
     tiny = 1e-12

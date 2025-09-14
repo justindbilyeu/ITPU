@@ -1,5 +1,3 @@
-Got it 👍 — here’s a complete README replacement in Markdown, tuned to your current flat repo layout, working smoke test, and the new docs/tests you’ve added:
-
 # Information-Theoretic Processing Unit (ITPU)
 
 **Accelerate entropy, mutual information (MI), and k-NN estimators — software today, hardware-ready tomorrow.**

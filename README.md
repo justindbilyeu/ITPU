@@ -1,5 +1,3 @@
-Got it—here’s a tightened, software-first, research-aligned README you can paste over your current one. I emphasized our current star: the WS1→WS3 stack (phenomenology → information-theory pipelines), with IAAFT/block surrogates, nested CV decoding, and a clean hand-off to future hardware.
-
 # Information-Theoretic Processing Unit (ITPU)
 
 **Accelerate entropy, mutual information (MI), and k-NN–based estimators — software today, hardware tomorrow.**

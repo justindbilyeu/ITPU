@@ -31,6 +31,7 @@ jobs:
         run: pytest -q
 
   eeg_smoke:
+    needs: [test]
     name: EEG benchmark smoke (Ubuntu / py3.11)
     runs-on: ubuntu-latest
     steps:
@@ -56,9 +57,4 @@ jobs:
           bc = BenchmarkComparison()
           bc.run(duration_s=10, n_channels=6, fs=200)
           print("EEG benchmark smoke: OK")
-            eeg_smoke:
-    needs: [test]
-    name: EEG benchmark smoke (Ubuntu / py3.11)
-    ...
-   
-   PY
+          PY

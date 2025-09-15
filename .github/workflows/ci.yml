@@ -60,4 +60,5 @@ jobs:
     needs: [test]
     name: EEG benchmark smoke (Ubuntu / py3.11)
     ...
-          PY
+   
+   PY

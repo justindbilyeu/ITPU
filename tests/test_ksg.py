@@ -28,10 +28,19 @@ def test_zero_variance():
     assert mi == 0.0
     assert any("near-zero radius" in str(warning.message) for warning in w)
 
-def test_metric_toggle_parity():
-    np.random.seed(2)
-    x = np.random.randn(2000)
-    y = x + 0.1 * np.random.randn(2000)
-    mi1, _ = ksg_mi_estimate(x, y, metric="chebyshev")
-    mi2, _ = ksg_mi_estimate(x, y, metric="euclidean")
-    assert abs(mi1 - mi2) < 0.05
+def test_chebyshev_accuracy_vs_true_mi():
+    # KSG-1 is derived for the L∞ (Chebyshev) metric; Euclidean is a different
+    # variant that carries a systematic downward bias (~0.26 nats, constant
+    # across rho values) because the L2 ball is larger than L∞ for the same k,
+    # inflating marginal neighbor counts and reducing the MI estimate.
+    # The two metrics should NOT agree — the original parity test was only
+    # passing because both paths were using the same (wrong) Euclidean
+    # implementation. This test verifies that Chebyshev tracks the true MI.
+    # True MI for bivariate Gaussian: -0.5 * log(1 - rho^2).
+    rng = np.random.default_rng(2)
+    n, rho = 5000, 0.6
+    data = rng.multivariate_normal([0, 0], [[1, rho], [rho, 1]], size=n)
+    x, y = data[:, 0], data[:, 1]
+    true_mi = -0.5 * np.log(1 - rho**2)  # ≈ 0.223 nats
+    mi, _ = ksg_mi_estimate(x, y, metric="chebyshev")
+    assert abs(mi - true_mi) < 0.05

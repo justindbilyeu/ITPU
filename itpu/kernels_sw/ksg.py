@@ -27,14 +27,13 @@ def ksg_mi_estimate(
     if N <= k:
         return 0.0, dict(N=N, k=k, method="ksg", note="too few samples")
 
-    d = 2  # joint dimension (x, y)
+    z = np.column_stack((x, y))
+    d = z.shape[1]  # joint dimension, derived from data
     if N < 10 ** d:
         warnings.warn(
             f"KSG: Sample count may be insufficient for reliable {d}D KSG estimation.",
             stacklevel=2,
         )
-
-    z = np.column_stack((x, y))
     p = np.inf if metric == "chebyshev" else 2
     tree_z = cKDTree(z)
     dists, _ = tree_z.query(z, k=k+1, p=p, workers=-1)  # includes self

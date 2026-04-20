@@ -33,7 +33,7 @@ class ITPU:
             return _mi_hist(x, y, bins=bins)
         elif method == "ksg":
             k = int(kwargs.get("k", 5))
-            mi, _ = ksg_mi_estimate(x, y, k=k)
+            mi, _ = ksg_mi_estimate(x, y, k=k, clip_zero=False)
             return mi
         else:
             raise ValueError(f"Unknown method: {method}")

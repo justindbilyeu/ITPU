@@ -1,4 +1,5 @@
 from __future__ import annotations
+import warnings
 import numpy as np
 from scipy.spatial import cKDTree
 from scipy.special import digamma
@@ -26,24 +27,44 @@ def ksg_mi_estimate(
     if N <= k:
         return 0.0, dict(N=N, k=k, method="ksg", note="too few samples")
 
+    d = 2  # joint dimension (x, y)
+    if N < 10 ** d:
+        warnings.warn(
+            f"KSG: Sample count may be insufficient for reliable {d}D KSG estimation.",
+            stacklevel=2,
+        )
+
     z = np.column_stack((x, y))
     p = np.inf if metric == "chebyshev" else 2
     tree_z = cKDTree(z)
     dists, _ = tree_z.query(z, k=k+1, p=p, workers=-1)  # includes self
     radii = dists[:, k]
 
+    n_tiny = int(np.sum(radii < _EPS))
+    if n_tiny > 0:
+        warnings.warn(
+            f"KSG: {n_tiny} samples have near-zero radius (possible duplicate or zero-variance data). MI estimate unreliable.",
+            stacklevel=2,
+        )
+
     tiny = 1e-12
     tree_x = cKDTree(x[:, None])
     tree_y = cKDTree(y[:, None])
     nx = np.array(tree_x.query_ball_point(x[:, None], radii - tiny, return_length=True)) - 1
     ny = np.array(tree_y.query_ball_point(y[:, None], radii - tiny, return_length=True)) - 1
+
+    n_zero = int(np.sum((nx < 0) | (ny < 0)))
+    if n_zero > 0:
+        warnings.warn(
+            f"KSG: {n_zero} samples have zero marginal neighbors within joint radius. High-dimensional density collapse likely. MI estimate may be unreliable.",
+            stacklevel=2,
+        )
+
     nx = np.maximum(nx, 0); ny = np.maximum(ny, 0)
 
     mi = digamma(k) + digamma(N) - np.mean(digamma(nx + 1) + digamma(ny + 1))
     mi = float(max(mi, 0.0))
     stats = dict(N=N, k=k, metric=metric, method="ksg")
-    if np.all(radii < _EPS):
-        stats["note"] = "zero-variance or duplicate samples"
     return mi, stats
 
 def windowed_ksg_mi(

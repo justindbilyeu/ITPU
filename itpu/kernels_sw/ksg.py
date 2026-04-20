@@ -14,7 +14,7 @@ def _as_1d(a):
     return a
 
 def ksg_mi_estimate(
-    x, y, k: int = 5, metric: str = "chebyshev"
+    x, y, k: int = 5, metric: str = "chebyshev", clip_zero: bool = True
 ) -> tuple[float, dict]:
     """
     Kraskov–Stögbauer–Grassberger MI estimator (variant I).
@@ -62,7 +62,9 @@ def ksg_mi_estimate(
     nx = np.maximum(nx, 0); ny = np.maximum(ny, 0)
 
     mi = digamma(k) + digamma(N) - np.mean(digamma(nx + 1) + digamma(ny + 1))
-    mi = float(max(mi, 0.0))
+    if clip_zero:
+        mi = max(mi, 0.0)
+    mi = float(mi)
     stats = dict(N=N, k=k, metric=metric, method="ksg")
     return mi, stats
 

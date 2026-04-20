@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### R1 Status — Surrogate Testing Framework: Complete (2026-04-20)
+
+**Delivered:**
+- `itpu/stats/` module: `surrogates.py`, `multiple_testing.py`, `surrogate_test.py`
+- `shuffle_surrogate` and `block_bootstrap_surrogate` with full test coverage
+- `benjamini_hochberg` with order-preservation correctness (12 tests)
+- `surrogate_test()` wired end-to-end through `ITPU` SDK
+- Locked calibration and power tests in `tests/test_surrogate_validation.py`
+
+**KSG calibration gate result (locked, on record):**
+- KS statistic: **0.0565** | KS p-value: **0.1497** — PASS (threshold > 0.05)
+- 400 independent H₀ trials, n=1000, n_surrogates=999, surrogate_type="shuffle"
+
+**Two bugs caught and fixed by the calibration gate (not the power test):**
+
+1. *Wrong metric in SDK shadow KSG implementation* — `sdk.py` contained a
+   duplicate `_mi_ksg` using Euclidean distance in the joint space instead of
+   Chebyshev (KSG-1 requirement). Fixed by wiring `ITPU.mutual_info(method="ksg")`
+   to delegate to `ksg_mi_estimate` in `kernels_sw/ksg.py` — one implementation,
+   correct metric. Pre-fix KS: 0.0785 / p=0.0137 (FAIL).
+
+2. *`max(mi, 0.0)` clipping breaking null distribution comparison* — Under H₀,
+   ~50% of KSG estimates are naturally negative. Clipping both observed and null
+   values to 0 caused p_value=1.0 whenever mi_observed clipped, producing a
+   bimodal p-value distribution (KS: 0.4850 / p=0.0000). Fixed by adding
+   `clip_zero=True` parameter to `ksg_mi_estimate` (default preserves all
+   existing callers); SDK passes `clip_zero=False`.
+
+Neither bug was catchable by the H₁ power test — ρ=0.6 is strong enough to
+survive both. The calibration gate is the reason they were caught before shipping.
+
+**Open items (Phase 2):**
+- IAAFT surrogate fast-follow (preserves power spectrum; needed for oscillatory data)
+- Batch FDR: `surrogate_test` accepts `fdr_alpha` but BH correction not yet applied in batch context
+- Adaptive k-selection for KSG (data-driven k rather than fixed k=5)
+- **SDK shadow implementation audit for `method="hist"` — confirmed open:** `sdk.py`'s
+  `_mi_hist` computes marginals from independent 1D histograms (inconsistent bin edges
+  vs joint); `kernels_sw/hist.py` correctly derives marginals by summing the joint
+  histogram. Same architectural problem as KSG. Fix: wire `ITPU.mutual_info(method="hist")`
+  to delegate to `mutual_info_hist` in `kernels_sw/hist.py`. Not blocking R1 (surrogate_test
+  defaults to `method="ksg"`) but must be resolved before hist-based surrogate testing.
+
 ### Added
 
 - Comprehensive benchmark suite comparing against SciPy/scikit-learn

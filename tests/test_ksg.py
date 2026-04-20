@@ -19,11 +19,14 @@ def test_correlated_gaussian():
     assert 0.20 <= mi <= 0.25  # analytic MI ≈ 0.223
 
 def test_zero_variance():
+    import warnings
     x = np.ones(1000)
-    y = np.random.randn(1000)
-    mi, stats = ksg_mi_estimate(x, y, k=5)
+    y = np.ones(1000)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        mi, stats = ksg_mi_estimate(x, y, k=5)
     assert mi == 0.0
-    assert "note" in stats
+    assert any("near-zero radius" in str(warning.message) for warning in w)
 
 def test_metric_toggle_parity():
     np.random.seed(2)

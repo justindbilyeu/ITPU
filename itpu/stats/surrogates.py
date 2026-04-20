@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 from numpy.random import Generator
 
@@ -30,7 +32,13 @@ def shuffle_surrogate(
     np.ndarray
         Shape (n_surrogates, len(x)). Each row is one shuffled surrogate.
     """
-    raise NotImplementedError
+    rng = np.random.default_rng(rng)
+    x = np.asarray(x)
+    n = len(x)
+    out = np.empty((n_surrogates, n), dtype=x.dtype)
+    for i in range(n_surrogates):
+        out[i] = rng.permutation(x)
+    return out
 
 
 def block_bootstrap_surrogate(
@@ -63,4 +71,15 @@ def block_bootstrap_surrogate(
     np.ndarray
         Shape (n_surrogates, len(x)). Each row is one block-resampled surrogate.
     """
-    raise NotImplementedError
+    rng = np.random.default_rng(rng)
+    x = np.asarray(x)
+    n = len(x)
+    n_blocks = math.ceil(n / block_size)
+    out = np.empty((n_surrogates, n), dtype=x.dtype)
+    for i in range(n_surrogates):
+        starts = rng.integers(0, n, size=n_blocks)
+        indices = np.concatenate([
+            np.arange(s, s + block_size) % n for s in starts
+        ])
+        out[i] = x[indices[:n]]
+    return out

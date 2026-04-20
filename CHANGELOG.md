@@ -38,16 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Neither bug was catchable by the H₁ power test — ρ=0.6 is strong enough to
 survive both. The calibration gate is the reason they were caught before shipping.
 
-**Open items (Phase 2):**
-- IAAFT surrogate fast-follow (preserves power spectrum; needed for oscillatory data)
-- Batch FDR: `surrogate_test` accepts `fdr_alpha` but BH correction not yet applied in batch context
-- Adaptive k-selection for KSG (data-driven k rather than fixed k=5)
-- **SDK shadow implementation audit for `method="hist"` — confirmed open:** `sdk.py`'s
-  `_mi_hist` computes marginals from independent 1D histograms (inconsistent bin edges
-  vs joint); `kernels_sw/hist.py` correctly derives marginals by summing the joint
-  histogram. Same architectural problem as KSG. Fix: wire `ITPU.mutual_info(method="hist")`
-  to delegate to `mutual_info_hist` in `kernels_sw/hist.py`. Not blocking R1 (surrogate_test
-  defaults to `method="ksg"`) but must be resolved before hist-based surrogate testing.
+**R1 closed. CI: 40 passed, 1 deselected (slow calibration test).**
+
+**R2 gate clear:** Software correctness established. Hardware pathfinder conversation
+can begin after IAAFT issue is open (issue #13) and estimator selection guide has a draft (issue #15).
+
+**Open fast-follow items for Phase 2 (tracked as GitHub issues):**
+- #13 — IAAFT surrogate (preserves power spectrum; required for oscillatory/autocorrelated data)
+- #14 — Batch FDR: `surrogate_test` accepts `fdr_alpha` but BH correction not yet applied
+- #15 — MI Estimator Selection Guide: histogram bias formula, KSG metric behavior, hist shadow audit
+- Adaptive k-selection for KSG (data-driven k rather than fixed k=5) — not yet filed
 
 ### Added
 

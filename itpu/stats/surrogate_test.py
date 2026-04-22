@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 from itpu.sdk import ITPU
-from itpu.stats.surrogates import block_bootstrap_surrogate, shuffle_surrogate
+from itpu.stats.surrogates import block_bootstrap_surrogate, iaaft_surrogate, shuffle_surrogate
 
 
 def surrogate_test(
@@ -77,8 +77,10 @@ def surrogate_test(
         surrogates = block_bootstrap_surrogate(
             y, block_size=block_size, n_surrogates=n_surrogates, rng=rng
         )
+    elif surrogate_type == "iaaft":
+        surrogates = iaaft_surrogate(y, n_surrogates=n_surrogates, rng=rng)
     else:
-        raise ValueError(f"Unknown surrogate_type: {surrogate_type!r}. Use 'shuffle' or 'block'.")
+        raise ValueError(f"Unknown surrogate_type: {surrogate_type!r}. Use 'shuffle', 'block', or 'iaaft'.")
 
     null_distribution = np.array([
         sdk.mutual_info(x, surrogates[i], method=method)

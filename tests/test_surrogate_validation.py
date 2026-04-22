@@ -71,3 +71,21 @@ def test_h1_power_detects_correlation():
         f"Failed to detect strong correlation (p={result['p_value']:.4f}). "
         "Expected p < 0.05 for rho=0.6 with n=500."
     )
+
+
+def test_iaaft_surrogate_type_wiring():
+    """surrogate_type='iaaft' is wired through surrogate_test() correctly.
+
+    Wiring test only — not a calibration test. Verifies the return dict has
+    all expected keys and p_value is a float in [0, 1].
+    """
+    rng = np.random.default_rng(0)
+    x = rng.standard_normal(200)
+    y = 0.6 * x + 0.4 * rng.standard_normal(200)
+
+    result = surrogate_test(x, y, method="ksg", n_surrogates=49, surrogate_type="iaaft")
+
+    expected_keys = {"mi_observed", "null_distribution", "p_value", "power_estimate", "warnings"}
+    assert set(result.keys()) == expected_keys
+    assert isinstance(result["p_value"], float)
+    assert 0.0 <= result["p_value"] <= 1.0

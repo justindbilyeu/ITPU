@@ -31,12 +31,14 @@ def surrogate_test(
     y:
         1D array, second variable. Must be the same length as x.
     method:
-        MI estimator to use. Currently supported: "ksg".
+        MI estimator to use. One of: "ksg", "hist".
     n_surrogates:
         Number of surrogate samples used to build the null distribution.
     surrogate_type:
         Resampling strategy for generating surrogates. One of:
-        "shuffle" (independent permutation) or "block" (block bootstrap).
+        "shuffle" (independent permutation), "block" (block bootstrap),
+        or "iaaft" (preserves power spectrum and amplitude distribution;
+        use for stationary autocorrelated data such as EEG/LFP).
     fdr_alpha:
         FDR level for downstream Benjamini-Hochberg correction. This parameter
         is accepted for API compatibility with future batch usage but is NOT

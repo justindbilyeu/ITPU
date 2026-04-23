@@ -130,32 +130,28 @@ can begin after IAAFT issue is open (issue #13) and estimator selection guide ha
 
 ## Future Roadmap
 
-### R1 (Current - Software Foundation)
+### R1 — Software SDK (complete)
 
 - ✅ Histogram MI with sliding windows
-- 🧪 KSG MI (experimental)
-- 🚧 Comprehensive benchmarks
-- 🚧 Real-time demos
+- ✅ KSG MI (Chebyshev metric, calibrated)
+- ✅ Surrogate testing: shuffle, block bootstrap, IAAFT
+- ✅ Benjamini-Hochberg FDR correction
+- ✅ Locked calibration gate: KS=0.0565, p=0.1497
+- ✅ CONTRIBUTING.md and estimator guide
 
-### R2 (Next - Enhanced Software)
+### R2 — FPGA Pathfinder (next)
 
-- 📋 Stable KSG implementation
-- 📋 GPU acceleration options (CuPy backend)
-- 📋 Batch MI matrices (all pairwise channels)
-- 📋 Advanced windowing strategies
+- 📋 Profile histogram and KSG kernels on BCI workloads
+- 📋 Spec a PCIe dev card
+- 📋 Same SDK API — `device="fpga"` — no user code changes
+- 📋 Batch FDR: wire `fdr_alpha` through to BH correction (#14)
+- 📋 Adaptive k-selection for KSG
 
-### R3 (Future - Hardware Pathfinder)
+### R3 — Partner Pilots
 
-- 📋 FPGA prototype development
-- 📋 Hardware-software co-design
-- 📋 Performance validation vs software
-- 📋 Partner pilot programs
-
-### R4 (Long-term - Production Hardware)
-
-- 📋 ASIC feasibility and design
-- 📋 Commercial partnerships
-- 📋 Production deployment
+- 📋 BCI/EEG real-time MI
+- 📋 Medical imaging registration
+- 📋 Causal ML validation
 
 ## Legend
 

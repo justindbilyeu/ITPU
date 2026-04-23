@@ -109,6 +109,7 @@ tests/
   ...
 
 docs/
+  estimator_guide.md      # surrogate selection decision tree, histogram bias, KSG notes
   roadmap.md
   kernels.md
 ```
@@ -133,7 +134,7 @@ BCI/EEG real-time MI, medical imaging registration, causal ML. The hardware need
 ```bash
 pip install -e .
 pytest -q -m "not slow"   # fast suite — runs in ~10s
-pytest -q --slow          # includes H₀ calibration (400 trials, ~1hr)
+pytest -q -m slow         # includes H₀ calibration (400 trials, ~1hr)
 ```
 
 Public API stability contract: `ITPU.mutual_info()`, `windowed_mi()`, `surrogate_test()`. Add tests for new kernels. The calibration thresholds in `tests/test_surrogate_validation.py` are locked — if a code change fails calibration, fix the code, not the threshold.

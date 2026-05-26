@@ -41,12 +41,12 @@ survive both. The calibration gate is the reason they were caught before shippin
 **R1 closed. CI: 40 passed, 1 deselected (slow calibration test).**
 
 **R2 gate clear:** Software correctness established. Hardware pathfinder conversation
-can begin after IAAFT issue is open (issue #13) and estimator selection guide has a draft (issue #15).
+can begin after IAAFT calibration is confirmed (issue #13 open). Estimator selection guide drafted and issue #15 closed.
 
 **Open fast-follow items for Phase 2 (tracked as GitHub issues):**
-- #13 — IAAFT surrogate (preserves power spectrum; required for oscillatory/autocorrelated data)
+- #13 — IAAFT calibration gate (code implemented; AR(1) H₀ calibration run pending)
 - #14 — Batch FDR: `surrogate_test` accepts `fdr_alpha` but BH correction not yet applied
-- #15 — MI Estimator Selection Guide: histogram bias formula, KSG metric behavior, hist shadow audit
+- ~~#15~~ — MI Estimator Selection Guide: **closed** (estimator_guide.md shipped, 2026-04-22)
 - Adaptive k-selection for KSG (data-driven k rather than fixed k=5) — not yet filed
 
 ### Added
@@ -134,7 +134,8 @@ can begin after IAAFT issue is open (issue #13) and estimator selection guide ha
 
 - ✅ Histogram MI with sliding windows
 - ✅ KSG MI (Chebyshev metric, calibrated)
-- ✅ Surrogate testing: shuffle, block bootstrap, IAAFT
+- ✅ Surrogate testing: shuffle and block-bootstrap (calibrated)
+- 🧪 IAAFT surrogate: implemented, AR(1) calibration pending (issue #13)
 - ✅ Benjamini-Hochberg FDR correction
 - ✅ Locked calibration gate: KS=0.0565, p=0.1497
 - ✅ CONTRIBUTING.md and estimator guide

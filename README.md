@@ -18,12 +18,12 @@ ITPU is building dedicated hardware for information-theoretic computation. The s
 **What the software does right now:**
 - Histogram MI and KSG (Kraskov–Stögbauer–Grassberger) MI, both returning nats
 - Sliding-window MI for streaming and time-series data
-- Surrogate testing with shuffle, block-bootstrap, and IAAFT null distributions
-- IAAFT surrogates for autocorrelated/oscillatory data — preserves power spectrum and amplitude distribution
+- Surrogate testing with shuffle and block-bootstrap null distributions (calibrated)
 - Benjamini-Hochberg FDR correction
 - Statistical calibration verified: KS=0.0565, p=0.1497 under H₀
 
 **What's coming:**
+- IAAFT surrogates for autocorrelated/oscillatory data (implemented, AR(1) calibration pending — issue #13)
 - FPGA pathfinder (R2) — same SDK API, hardware backend
 - Partner pilots: BCI/EEG, medical imaging, causal ML
 
@@ -80,7 +80,7 @@ print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
 
 **KSG MI** uses the L∞ (Chebyshev) metric, which is the theoretically correct choice for KSG variant 1. The Euclidean variant carries a constant ~0.26 nat downward bias regardless of true MI — don't use it for quantitative work. The default (`metric="chebyshev"`) is calibrated.
 
-**Surrogate testing** uses a permutation p-value: `p = (#{null ≥ observed} + 1) / (n_surrogates + 1)`. The +1 smoothing is conservative and intentional. Calibration was verified with 400 independent H₀ trials at n=1000, n_surrogates=999 (KS test against Uniform[0,1]: statistic=0.0565, p=0.1497). For autocorrelated data, use `surrogate_type="iaaft"` — IAAFT preserves the power spectrum and amplitude distribution while randomizing phases. `shuffle` destroys temporal structure and will give miscalibrated results on autocorrelated data. See `docs/estimator_guide.md` for the surrogate selection decision tree.
+**Surrogate testing** uses a permutation p-value: `p = (#{null ≥ observed} + 1) / (n_surrogates + 1)`. The +1 smoothing is conservative and intentional. Calibration was verified with 400 independent H₀ trials at n=1000, n_surrogates=999 (KS test against Uniform[0,1]: statistic=0.0565, p=0.1497). For autocorrelated data, `surrogate_type="iaaft"` is the correct null — IAAFT preserves the power spectrum and amplitude distribution while randomizing phases. `shuffle` destroys temporal structure and will give miscalibrated results on autocorrelated data. **IAAFT is implemented but AR(1) calibration is pending (issue #13); do not use for publication results until that gate closes.** See `docs/estimator_guide.md` for the surrogate selection decision tree.
 
 ---
 
@@ -103,7 +103,7 @@ itpu/
 tests/
   test_ksg.py               # KSG correctness + warning escalations
   test_hist.py              # Histogram MI correctness
-  test_surrogates.py        # Surrogate shape, permutation, determinism, IAAFT (14 tests)
+  test_surrogates.py        # Surrogate shape, permutation, determinism; IAAFT structural tests (calibration pending #13)
   test_multiple_testing.py  # BH correctness incl. order-preservation (12 tests)
   test_surrogate_validation.py  # Locked H₀ calibration + H₁ power tests
   ...
@@ -119,7 +119,7 @@ docs/
 ## Roadmap
 
 **R1 — Software SDK (complete)**
-Correctness established. Surrogate testing framework shipped and calibrated, including IAAFT. CI green at 46 tests.
+Correctness established. Surrogate testing framework shipped and calibrated: shuffle and block-bootstrap done, calibration gate passed (KS=0.0565, p=0.1497). IAAFT implemented; AR(1) calibration pending (issue #13). CI green at 46 tests.
 
 **R2 — FPGA Pathfinder (next)**
 Profile the histogram and KSG kernels on target workloads. Spec a PCIe dev card. Same SDK API — `device="fpga"` — no user code changes.

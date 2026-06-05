@@ -1,6 +1,7 @@
 import numpy as np
 
 from itpu.kernels_sw.ksg import ksg_mi_estimate
+from itpu.types import EstimatorValue
 
 __all__ = ["ITPU"]
 
@@ -36,11 +37,11 @@ class ITPU:
 
         if method == "hist":
             bins = int(kwargs.get("bins", 64))
-            return _mi_hist(x, y, bins=bins)
+            return EstimatorValue(_mi_hist(x, y, bins=bins), "hist")
         elif method == "ksg":
             k = int(kwargs.get("k", 5))
             mi, _ = ksg_mi_estimate(x, y, k=k, clip_zero=False)
-            return mi
+            return EstimatorValue(mi, "ksg")
         else:
             raise ValueError(f"Unknown method: {method}")
 

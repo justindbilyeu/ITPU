@@ -45,7 +45,7 @@ pytest -q -m "not slow"
 
 ```python
 import numpy as np
-from itpu.sdk import ITPU
+from itpu import ITPU, to_common_basis
 from itpu.utils.windowed import windowed_mi
 from itpu.stats.surrogate_test import surrogate_test
 
@@ -62,12 +62,21 @@ mi_hist = itpu.mutual_info(x, y, method="hist", bins=32)
 # Note: keep n ≥ 10,000 for reliable estimates; KSG is slow at large n
 mi_ksg = itpu.mutual_info(x[:10_000], y[:10_000], method="ksg", k=5)
 
+# MI values are tagged with their estimator — use float() to strip the tag
+repr(mi_ksg)    # EstimatorValue(0.223456, estimator='ksg')
+float(mi_ksg)   # 0.223456  (plain float, backward compatible)
+
+# Cross-estimator comparison raises TypeError to prevent silent mixing
+# mi_hist == mi_ksg  # TypeError: Cannot compare 'hist' MI with 'ksg' MI
+# Use to_common_basis() for explicit conversion (re-runs the estimator)
+mi_hist_as_ksg = to_common_basis(mi_hist, "ksg", x, y, k=5)
+
 # Sliding-window MI for time series
 starts, mi_vals = windowed_mi(x, y, window_size=2000, hop_size=400)
 
-# Surrogate test — calibrated permutation p-value
+# Surrogate test — returns SurrogateResult with tagged MI and p-value
 result = surrogate_test(x[:5_000], y[:5_000], method="ksg", n_surrogates=499)
-print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
+print(f"MI = {float(result.mi):.3f} nats, p = {result.p_value:.3f}")
 
 # All values in nats. Divide by np.log(2) for bits.
 ```
@@ -75,6 +84,8 @@ print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
 ---
 
 ## Estimator notes
+
+**MI values are tagged with their estimator.** `mutual_info()` returns an `EstimatorValue` — a float subclass that carries an `estimator` attribute. It behaves like a plain float for all arithmetic and comparisons. Cross-estimator `==` or `+` raises `TypeError` to prevent silent mixing of histogram and KSG values. Use `float(mi)` to strip the tag, or `to_common_basis(mi, target, x, y)` to recompute with a different estimator. `surrogate_test()` returns a `SurrogateResult` dataclass (fields: `mi`, `p_value`, `n_surrogates`, `estimator`, `null_distribution`, `power_estimate`, `warnings`).
 
 **Histogram MI** has a positive finite-sample bias of approximately `(bins−1)² / (2N)` (Miller-Madow). At `bins=64, N=5000` this is ~0.40 nats — larger than many real effects. Rule of thumb: keep `(bins−1)² / (2N) < 0.01`, which means `bins=32` needs `N > 48,000`. Use fewer bins or more data when testing for near-zero MI.
 
@@ -89,6 +100,7 @@ print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
 ```
 itpu/
   sdk.py                    # ITPU class — the public API
+  types.py                  # EstimatorValue, SurrogateResult
   kernels_sw/
     ksg.py                  # KSG MI (Chebyshev, calibrated, clip_zero param)
     hist.py                 # Histogram MI kernel

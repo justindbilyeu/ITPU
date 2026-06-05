@@ -44,7 +44,7 @@ def test_h0_pvalue_calibration():
         result = surrogate_test(
             x, y, method="ksg", n_surrogates=999, surrogate_type="shuffle"
         )
-        p_values[i] = result["p_value"]
+        p_values[i] = result.p_value
 
     ks_result = stats.kstest(p_values, "uniform")
     assert ks_result.pvalue > 0.05, (
@@ -67,8 +67,8 @@ def test_h1_power_detects_correlation():
         x, y, method="ksg", n_surrogates=499, surrogate_type="shuffle"
     )
 
-    assert result["p_value"] < 0.05, (
-        f"Failed to detect strong correlation (p={result['p_value']:.4f}). "
+    assert result.p_value < 0.05, (
+        f"Failed to detect strong correlation (p={result.p_value:.4f}). "
         "Expected p < 0.05 for rho=0.6 with n=500."
     )
 
@@ -85,7 +85,12 @@ def test_iaaft_surrogate_type_wiring():
 
     result = surrogate_test(x, y, method="ksg", n_surrogates=49, surrogate_type="iaaft")
 
-    expected_keys = {"mi_observed", "null_distribution", "p_value", "power_estimate", "warnings"}
-    assert set(result.keys()) == expected_keys
-    assert isinstance(result["p_value"], float)
-    assert 0.0 <= result["p_value"] <= 1.0
+    from itpu.types import EstimatorValue, SurrogateResult
+    assert isinstance(result, SurrogateResult)
+    assert isinstance(result.mi, EstimatorValue)
+    assert result.mi.estimator == "ksg"
+    assert isinstance(result.p_value, float)
+    assert 0.0 <= result.p_value <= 1.0
+    assert result.n_surrogates == 49
+    assert result.estimator == "ksg"
+    assert len(result.null_distribution) == 49

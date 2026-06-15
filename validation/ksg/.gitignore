@@ -1,0 +1,8 @@
+# Generated outputs — do not commit
+results/*.json
+results/*.csv
+figures/*.png
+figures/*.pdf
+figures/*.svg
+__pycache__/
+*.pyc

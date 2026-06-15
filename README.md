@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![CI](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml/badge.svg)](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml)
-[![Status](https://img.shields.io/badge/status-R1%20complete-green)]()
+[![Status](https://img.shields.io/badge/status-R1%20validated-brightgreen)]()
 
 ---
 
@@ -21,6 +21,8 @@ ITPU is building dedicated hardware for information-theoretic computation. The s
 - Surrogate testing with shuffle and block-bootstrap null distributions (calibrated)
 - Benjamini-Hochberg FDR correction
 - Statistical calibration verified: KS=0.0565, p=0.1497 under H₀
+- Estimator-aware MI values (`EstimatorValue`) — cross-estimator mixing raises `TypeError`
+- **KSG R1 validation suite** — T1–T9 battery (known-answer bias, convergence, oracle agreement, invariance, independence floor); all gates pass; `MI_floor = 0.01995 nats` at N=10,000, k=4
 
 **What's coming:**
 - IAAFT surrogates for autocorrelated/oscillatory data (implemented, AR(1) calibration pending — issue #13)
@@ -124,17 +126,26 @@ docs/
   estimator_guide.md      # surrogate selection decision tree, histogram bias, KSG notes
   roadmap.md
   kernels.md
+
+validation/ksg/           # KSG R1 validation suite (spec 4acda542)
+  ksg.py                  # standalone spec-compliant KSG (C1–C6 conventions)
+  ground_truth.py         # analytic MI formulas + bivariate generators
+  oracles.py              # O(N²) brute-force reference + digamma identity assert
+  test_ksg.py             # T1–T9 pytest battery; τ_var=0.009651
+  run_suite.py            # sweep orchestrator → results/*.json + CSVs
+  bench_audit.py          # 26× speedup re-audit (accuracy-matched)
+  REPORT.md               # gate numbers on record
 ```
 
 ---
 
 ## Roadmap
 
-**R1 — Software SDK (complete)**
-Correctness established. Surrogate testing framework shipped and calibrated: shuffle and block-bootstrap done, calibration gate passed (KS=0.0565, p=0.1497). IAAFT implemented; AR(1) calibration pending (issue #13). CI green at 46 tests.
+**R1 — Software SDK (complete, validated)**
+Correctness established on two fronts. Surrogate testing framework shipped and calibrated (KS=0.0565, p=0.1497). KSG estimator validated independently: T1–T9 battery passes, including known-answer bias ≤0.54% across ρ∈{0.3,0.5,0.7,0.9}, oracle agreement ≤1e-9, reparameterization invariance, and independence floor (MI_floor=0.01995 nats). Estimator-aware type system prevents silent cross-estimator comparison. IAAFT implemented; AR(1) calibration pending (issue #13). CI green at 65 tests + 15 validation gates.
 
 **R2 — FPGA Pathfinder (next)**
-Profile the histogram and KSG kernels on target workloads. Spec a PCIe dev card. Same SDK API — `device="fpga"` — no user code changes.
+KSG is the acceleration target. Bench audit confirms: histogram MI cannot reach KSG accuracy at any bin count on continuous data (best effort: 1.85× KSG bias vs ≤1.20× target). KSG at N=10,000 runs in ~18ms CPU-side; 12.1× measured speedup over histogram at matched (im)precision. Profile and spec a PCIe dev card. Same SDK API — `device="fpga"` — no user code changes.
 
 **R3 — Partner Pilots**
 BCI/EEG real-time MI, medical imaging registration, causal ML. The hardware needs a real workload to validate against.

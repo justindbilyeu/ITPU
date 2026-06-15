@@ -43,8 +43,8 @@ S_CORE = 100
 # Pilot procedure: python validation/ksg/run_suite.py --pilot-only
 # After the pilot prints the SD and SHA, fill in both constants and commit.
 # Do not adjust after seeing the confirmatory run.
-_TAU_VAR_PILOT_SHA: str = "0ea73efbe996b00d9d6ef164028e04e08edb8e2c"
-_TAU_VAR: float | None = 0.009651      # SD from pilot (nats)
+_TAU_VAR_PILOT_SHA: str = "f4e6d3c6cb674f494678a98da27292feb330ad4a"
+_TAU_VAR: float | None = 0.009651      # SD from pilot (nats; regression gate)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

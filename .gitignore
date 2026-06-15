@@ -207,7 +207,10 @@ cython_debug/
 benchmark_results/
 *.json
 *.csv
-results/
+results/**
+!results/benchmarks/
+!results/benchmarks/gcmi/
+!results/benchmarks/gcmi/README.md
 output/
 data/raw/
 data/processed/

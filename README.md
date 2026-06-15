@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![CI](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml/badge.svg)](https://github.com/justindbilyeu/ITPU/actions/workflows/ci.yml)
-[![Status](https://img.shields.io/badge/status-R1%20complete-green)]()
+[![Status](https://img.shields.io/badge/status-R1%20validated-brightgreen)]()
 
 ---
 
@@ -18,12 +18,14 @@ ITPU is building dedicated hardware for information-theoretic computation. The s
 **What the software does right now:**
 - Histogram MI and KSG (Kraskov–Stögbauer–Grassberger) MI, both returning nats
 - Sliding-window MI for streaming and time-series data
-- Surrogate testing with shuffle, block-bootstrap, and IAAFT null distributions
-- IAAFT surrogates for autocorrelated/oscillatory data — preserves power spectrum and amplitude distribution
+- Surrogate testing with shuffle and block-bootstrap null distributions (calibrated)
 - Benjamini-Hochberg FDR correction
 - Statistical calibration verified: KS=0.0565, p=0.1497 under H₀
+- Estimator-aware MI values (`EstimatorValue`) — cross-estimator mixing raises `TypeError`
+- **KSG R1 validation suite** — T1–T9 battery (known-answer bias, convergence, oracle agreement, invariance, independence floor); all gates pass; `MI_floor = 0.01995 nats` at N=10,000, k=4
 
 **What's coming:**
+- IAAFT surrogates for autocorrelated/oscillatory data (implemented, AR(1) calibration pending — issue #13)
 - FPGA pathfinder (R2) — same SDK API, hardware backend
 - Partner pilots: BCI/EEG, medical imaging, causal ML
 
@@ -45,7 +47,7 @@ pytest -q -m "not slow"
 
 ```python
 import numpy as np
-from itpu.sdk import ITPU
+from itpu import ITPU, to_common_basis
 from itpu.utils.windowed import windowed_mi
 from itpu.stats.surrogate_test import surrogate_test
 
@@ -62,12 +64,21 @@ mi_hist = itpu.mutual_info(x, y, method="hist", bins=32)
 # Note: keep n ≥ 10,000 for reliable estimates; KSG is slow at large n
 mi_ksg = itpu.mutual_info(x[:10_000], y[:10_000], method="ksg", k=5)
 
+# MI values are tagged with their estimator — use float() to strip the tag
+repr(mi_ksg)    # EstimatorValue(0.223456, estimator='ksg')
+float(mi_ksg)   # 0.223456  (plain float, backward compatible)
+
+# Cross-estimator comparison raises TypeError to prevent silent mixing
+# mi_hist == mi_ksg  # TypeError: Cannot compare 'hist' MI with 'ksg' MI
+# Use to_common_basis() for explicit conversion (re-runs the estimator)
+mi_hist_as_ksg = to_common_basis(mi_hist, "ksg", x, y, k=5)
+
 # Sliding-window MI for time series
 starts, mi_vals = windowed_mi(x, y, window_size=2000, hop_size=400)
 
-# Surrogate test — calibrated permutation p-value
+# Surrogate test — returns SurrogateResult with tagged MI and p-value
 result = surrogate_test(x[:5_000], y[:5_000], method="ksg", n_surrogates=499)
-print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
+print(f"MI = {float(result.mi):.3f} nats, p = {result.p_value:.3f}")
 
 # All values in nats. Divide by np.log(2) for bits.
 ```
@@ -76,11 +87,13 @@ print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
 
 ## Estimator notes
 
+**MI values are tagged with their estimator.** `mutual_info()` returns an `EstimatorValue` — a float subclass that carries an `estimator` attribute. It behaves like a plain float for all arithmetic and comparisons. Cross-estimator `==` or `+` raises `TypeError` to prevent silent mixing of histogram and KSG values. Use `float(mi)` to strip the tag, or `to_common_basis(mi, target, x, y)` to recompute with a different estimator. `surrogate_test()` returns a `SurrogateResult` dataclass (fields: `mi`, `p_value`, `n_surrogates`, `estimator`, `null_distribution`, `power_estimate`, `warnings`).
+
 **Histogram MI** has a positive finite-sample bias of approximately `(bins−1)² / (2N)` (Miller-Madow). At `bins=64, N=5000` this is ~0.40 nats — larger than many real effects. Rule of thumb: keep `(bins−1)² / (2N) < 0.01`, which means `bins=32` needs `N > 48,000`. Use fewer bins or more data when testing for near-zero MI.
 
 **KSG MI** uses the L∞ (Chebyshev) metric, which is the theoretically correct choice for KSG variant 1. The Euclidean variant carries a constant ~0.26 nat downward bias regardless of true MI — don't use it for quantitative work. The default (`metric="chebyshev"`) is calibrated.
 
-**Surrogate testing** uses a permutation p-value: `p = (#{null ≥ observed} + 1) / (n_surrogates + 1)`. The +1 smoothing is conservative and intentional. Calibration was verified with 400 independent H₀ trials at n=1000, n_surrogates=999 (KS test against Uniform[0,1]: statistic=0.0565, p=0.1497). For autocorrelated data, use `surrogate_type="iaaft"` — IAAFT preserves the power spectrum and amplitude distribution while randomizing phases. `shuffle` destroys temporal structure and will give miscalibrated results on autocorrelated data. See `docs/estimator_guide.md` for the surrogate selection decision tree.
+**Surrogate testing** uses a permutation p-value: `p = (#{null ≥ observed} + 1) / (n_surrogates + 1)`. The +1 smoothing is conservative and intentional. Calibration was verified with 400 independent H₀ trials at n=1000, n_surrogates=999 (KS test against Uniform[0,1]: statistic=0.0565, p=0.1497). For autocorrelated data, `surrogate_type="iaaft"` is the correct null — IAAFT preserves the power spectrum and amplitude distribution while randomizing phases. `shuffle` destroys temporal structure and will give miscalibrated results on autocorrelated data. **IAAFT is implemented but AR(1) calibration is pending (issue #13); do not use for publication results until that gate closes.** See `docs/estimator_guide.md` for the surrogate selection decision tree.
 
 ---
 
@@ -89,6 +102,7 @@ print(f"MI = {result['mi_observed']:.3f} nats, p = {result['p_value']:.3f}")
 ```
 itpu/
   sdk.py                    # ITPU class — the public API
+  types.py                  # EstimatorValue, SurrogateResult
   kernels_sw/
     ksg.py                  # KSG MI (Chebyshev, calibrated, clip_zero param)
     hist.py                 # Histogram MI kernel
@@ -103,7 +117,7 @@ itpu/
 tests/
   test_ksg.py               # KSG correctness + warning escalations
   test_hist.py              # Histogram MI correctness
-  test_surrogates.py        # Surrogate shape, permutation, determinism, IAAFT (14 tests)
+  test_surrogates.py        # Surrogate shape, permutation, determinism; IAAFT structural tests (calibration pending #13)
   test_multiple_testing.py  # BH correctness incl. order-preservation (12 tests)
   test_surrogate_validation.py  # Locked H₀ calibration + H₁ power tests
   ...
@@ -112,17 +126,26 @@ docs/
   estimator_guide.md      # surrogate selection decision tree, histogram bias, KSG notes
   roadmap.md
   kernels.md
+
+validation/ksg/           # KSG R1 validation suite (spec 4acda542)
+  ksg.py                  # standalone spec-compliant KSG (C1–C6 conventions)
+  ground_truth.py         # analytic MI formulas + bivariate generators
+  oracles.py              # O(N²) brute-force reference + digamma identity assert
+  test_ksg.py             # T1–T9 pytest battery; τ_var=0.009651
+  run_suite.py            # sweep orchestrator → results/*.json + CSVs
+  bench_audit.py          # 26× speedup re-audit (accuracy-matched)
+  REPORT.md               # gate numbers on record
 ```
 
 ---
 
 ## Roadmap
 
-**R1 — Software SDK (complete)**
-Correctness established. Surrogate testing framework shipped and calibrated, including IAAFT. CI green at 46 tests.
+**R1 — Software SDK (complete, validated)**
+Correctness established on two fronts. Surrogate testing framework shipped and calibrated (KS=0.0565, p=0.1497). KSG estimator validated independently: T1–T9 battery passes, including known-answer bias ≤0.54% across ρ∈{0.3,0.5,0.7,0.9}, oracle agreement ≤1e-9, reparameterization invariance, and independence floor (MI_floor=0.01995 nats). Estimator-aware type system prevents silent cross-estimator comparison. IAAFT implemented; AR(1) calibration pending (issue #13). CI green at 65 tests + 15 validation gates.
 
 **R2 — FPGA Pathfinder (next)**
-Profile the histogram and KSG kernels on target workloads. Spec a PCIe dev card. Same SDK API — `device="fpga"` — no user code changes.
+KSG is the acceleration target. Bench audit confirms: histogram MI cannot reach KSG accuracy at any bin count on continuous data (best effort: 1.85× KSG bias vs ≤1.20× target). KSG at N=10,000 runs in ~18ms CPU-side; 12.1× measured speedup over histogram at matched (im)precision. Profile and spec a PCIe dev card. Same SDK API — `device="fpga"` — no user code changes.
 
 **R3 — Partner Pilots**
 BCI/EEG real-time MI, medical imaging registration, causal ML. The hardware needs a real workload to validate against.

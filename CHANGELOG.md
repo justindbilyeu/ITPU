@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### R1 Status — KSG Estimator Validated (2026-06-15)
+
+**KSG R1 validation suite shipped** (`validation/ksg/`):
+- T1–T9 pytest battery; all GATE tests pass (15/15 with `pytest -m "not diag"`)
+- T1 known-answer bias: ≤0.54% relative across ρ∈{0.3,0.5,0.7,0.9} (thresholds 5%/10%)
+- T2 consistency: OLS slope −0.478 (< −0.30 ✓), 7.68× bias reduction N=1250→N=20000
+- T3 variance: SD=0.009651 nats (regression gate; τ_var frozen at pilot SHA f4e6d3c6)
+- T4 independence floor: |mean(Î)| ≤ 0.000563 nats under both Gaussian and Uniform² nulls; **MI_floor = 0.01995 nats**
+- T5 reparameterization invariance: C5 standardization confirmed (scale_10x ≤6.79%)
+- T6 oracle agreement: |I_brute − I_ksg| = 0.000000000 (threshold ≤1e-9, exact match)
+- T7 digamma identities: |ψ(1)+γ| = 0.0, |ψ(2)−(1−γ)| = 0.0 (C2 confirmed)
+
+**26× speedup bench audit:** `R2_PREMISE_STANDS` — histogram MI cannot match KSG accuracy at any tested bin count (best: 1.85× KSG bias at bins=16, target ≤1.20×). Measured 12.1× wall-clock speedup at the closest bin count; informational only — the comparison is fast-but-wrong vs slow-but-right.
+
+**Estimator-aware type system shipped** (`itpu/types.py`):
+- `EstimatorValue(float)` — MI values tagged with estimator name; cross-estimator `==` or `+` raises `TypeError`
+- `SurrogateResult` — dataclass replacing `surrogate_test()` dict return; `.mi`, `.p_value`, `.null_distribution`, etc.
+- `to_common_basis()` — re-runs MI with target estimator, validates input type
+- 18 new tests in `tests/test_types.py`; backward compatible (float arithmetic unchanged)
+
+**Repo hygiene:**
+- Removed unused `cKDTree` import from `sdk.py`
+- Added histogram bias warning to `_mi_hist()` and `mutual_info()` docstrings
+- IAAFT status corrected everywhere: "implemented, AR(1) calibration pending — issue #13"
+- CHANGELOG issue #15 reference resolved (estimator_guide.md shipped 2026-04-22)
+- Scaffolded `benchmarks/gcmi/` and `results/benchmarks/gcmi/` with README stubs
+
+**CI:** 65 passed + 15 validation GATE tests = 80 tests total.
+
 ### R1 Status — Surrogate Testing Framework: Complete (2026-04-20)
 
 **Delivered:**
@@ -41,12 +70,12 @@ survive both. The calibration gate is the reason they were caught before shippin
 **R1 closed. CI: 40 passed, 1 deselected (slow calibration test).**
 
 **R2 gate clear:** Software correctness established. Hardware pathfinder conversation
-can begin after IAAFT issue is open (issue #13) and estimator selection guide has a draft (issue #15).
+can begin after IAAFT calibration is confirmed (issue #13 open). Estimator selection guide drafted and issue #15 closed.
 
 **Open fast-follow items for Phase 2 (tracked as GitHub issues):**
-- #13 — IAAFT surrogate (preserves power spectrum; required for oscillatory/autocorrelated data)
+- #13 — IAAFT calibration gate (code implemented; AR(1) H₀ calibration run pending)
 - #14 — Batch FDR: `surrogate_test` accepts `fdr_alpha` but BH correction not yet applied
-- #15 — MI Estimator Selection Guide: histogram bias formula, KSG metric behavior, hist shadow audit
+- ~~#15~~ — MI Estimator Selection Guide: **closed** (estimator_guide.md shipped, 2026-04-22)
 - Adaptive k-selection for KSG (data-driven k rather than fixed k=5) — not yet filed
 
 ### Added
@@ -134,7 +163,8 @@ can begin after IAAFT issue is open (issue #13) and estimator selection guide ha
 
 - ✅ Histogram MI with sliding windows
 - ✅ KSG MI (Chebyshev metric, calibrated)
-- ✅ Surrogate testing: shuffle, block bootstrap, IAAFT
+- ✅ Surrogate testing: shuffle and block-bootstrap (calibrated)
+- 🧪 IAAFT surrogate: implemented, AR(1) calibration pending (issue #13)
 - ✅ Benjamini-Hochberg FDR correction
 - ✅ Locked calibration gate: KS=0.0565, p=0.1497
 - ✅ CONTRIBUTING.md and estimator guide

@@ -66,17 +66,16 @@ def main(image_path: Path) -> None:
     client = anthropic.Anthropic()
 
     print(f"Image: {image_path.name}")
-    print(f"Model: claude-opus-4-7  |  thinking: adaptive  |  effort: high")
+    print(f"Model: claude-sonnet-4-6  |  thinking: adaptive")
     print("=" * 72)
 
     text_chunks: list[str] = []
     in_thinking = False
 
     with client.messages.stream(
-        model="claude-opus-4-7",
+        model="claude-sonnet-4-6",
         max_tokens=16000,
-        thinking={"type": "adaptive", "display": "summarized"},
-        output_config={"effort": "high"},
+        thinking={"type": "adaptive"},
         system=[
             {
                 "type": "text",

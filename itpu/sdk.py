@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.spatial import cKDTree
 
 from itpu.kernels_sw.ksg import ksg_mi_estimate
+from itpu.types import EstimatorValue
 
 __all__ = ["ITPU"]
 
@@ -21,7 +21,14 @@ class ITPU:
     def mutual_info(self, x, y, method="hist", **kwargs):
         """
         Mutual information between 1D arrays x,y (nats).
+
         method: "hist" (discrete/histogram) or "ksg" (continuous kNN).
+
+        Warning — histogram bias: method="hist" has an uncorrected plug-in
+        positive bias of approximately (bins-1)^2 / (2*N) nats. At bins=64
+        and N=5000 this is ~0.40 nats, larger than many real effects. Use
+        method="ksg" for quantitative accuracy, or keep bins low and N large
+        (rule of thumb: (bins-1)^2 / (2*N) < 0.01).
         """
         x = np.asarray(x).ravel()
         y = np.asarray(y).ravel()
@@ -30,11 +37,11 @@ class ITPU:
 
         if method == "hist":
             bins = int(kwargs.get("bins", 64))
-            return _mi_hist(x, y, bins=bins)
+            return EstimatorValue(_mi_hist(x, y, bins=bins), "hist")
         elif method == "ksg":
             k = int(kwargs.get("k", 5))
             mi, _ = ksg_mi_estimate(x, y, k=k, clip_zero=False)
-            return mi
+            return EstimatorValue(mi, "ksg")
         else:
             raise ValueError(f"Unknown method: {method}")
 
@@ -51,6 +58,8 @@ def _entropy_from_hist(counts):
 
 
 def _mi_hist(x, y, bins=64):
+    """Plug-in histogram MI estimator (nats). Has uncorrected positive bias
+    of ~(bins-1)^2 / (2*N). Use method='ksg' for quantitative accuracy."""
     hx, _ = np.histogram(x, bins=bins)
     hy, _ = np.histogram(y, bins=bins)
     hxy, _, _ = np.histogram2d(x, y, bins=bins)

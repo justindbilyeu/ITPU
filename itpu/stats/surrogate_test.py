@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 
 from itpu.sdk import ITPU
 from itpu.stats.surrogates import block_bootstrap_surrogate, iaaft_surrogate, shuffle_surrogate
+from itpu.types import SurrogateResult
 
 
 def surrogate_test(
@@ -16,7 +15,7 @@ def surrogate_test(
     surrogate_type: str = "shuffle",
     fdr_alpha: float = 0.05,
     rng=None,
-) -> dict[str, Any]:
+) -> SurrogateResult:
     """Test for statistical dependence between x and y using surrogate resampling.
 
     Estimates mutual information between x and y with the chosen MI estimator,
@@ -50,21 +49,24 @@ def surrogate_test(
 
     Returns
     -------
-    dict with keys:
-        mi_observed : float
-            MI estimate (nats) between x and y.
-        null_distribution : np.ndarray, shape (n_surrogates,)
-            MI values computed under the null (x vs shuffled y).
+    SurrogateResult with fields:
+        mi : EstimatorValue
+            MI estimate (nats) between x and y, tagged with the estimator name.
         p_value : float
             Empirical permutation p-value:
             (sum(null >= mi_observed) + 1) / (n_surrogates + 1).
             This formula is locked — do not substitute an alternative.
+        n_surrogates : int
+            Number of surrogates used.
+        estimator : str
+            The MI estimator used ("hist" or "ksg").
+        null_distribution : np.ndarray, shape (n_surrogates,)
+            MI values computed under the null (x vs resampled y).
         power_estimate : float
-            Proxy for power: proportion of null distribution below mi_observed,
-            i.e. mean(null < mi_observed). This is not a formal power analysis.
+            Proxy for power: proportion of null distribution below mi, i.e.
+            mean(null < mi). This is not a formal power analysis.
         warnings : list[str]
-            Diagnostic messages. Contains one entry if mi_observed is below
-            the null mean (possible estimator bias or insufficient sample size).
+            Diagnostic messages. Non-empty if mi is below the null mean.
     """
     x = np.asarray(x).ravel()
     y = np.asarray(y).ravel()
@@ -89,7 +91,7 @@ def surrogate_test(
         for i in range(n_surrogates)
     ])
 
-    p_value = (np.sum(null_distribution >= mi_observed) + 1) / (n_surrogates + 1)
+    p_value = float((np.sum(null_distribution >= mi_observed) + 1) / (n_surrogates + 1))
     power_estimate = float(np.mean(null_distribution < mi_observed))
 
     warning_messages = []
@@ -98,10 +100,12 @@ def surrogate_test(
             "Observed MI below null mean — possible estimator bias or insufficient sample size."
         )
 
-    return {
-        "mi_observed": float(mi_observed),
-        "null_distribution": null_distribution,
-        "p_value": float(p_value),
-        "power_estimate": power_estimate,
-        "warnings": warning_messages,
-    }
+    return SurrogateResult(
+        mi=mi_observed,
+        p_value=p_value,
+        n_surrogates=n_surrogates,
+        estimator=method,
+        null_distribution=null_distribution,
+        power_estimate=power_estimate,
+        warnings=warning_messages,
+    )

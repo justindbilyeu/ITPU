@@ -229,7 +229,7 @@ def test_t2_consistency():
     """
     T2: Bias decreasing in N for ρ=0.5.
 
-    (a) |bias(N=20000)| < |bias(N=2500)| by ≥ 2× margin.
+    (a) |bias(N=20000)| < |bias(N=1250)| by ≥ 2× margin.
     (b) OLS slope of log|bias| on log N < −0.30.
     """
     rho = 0.5

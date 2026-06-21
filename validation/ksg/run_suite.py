@@ -264,9 +264,9 @@ def run_t2(outdir: Path) -> dict:
     passed = passed_a and passed_b
     loc = (
         f"bias_ratio(1.25k/20k)={bias_ratio_1250:.2f} "
-        f"[info: bias_ratio(2.5k/20k)={bias_ratio_2500:.2f}] "
         f"slope={slope:.3f} "
         f"{'OK' if passed else 'FAIL — structural inconsistency, not tuning'}"
+        f" | fyi: bias_2500/bias_20000={bias_ratio_2500:.2f}"
     )
     return _make_result("T2_consistency", "GATE", max(abs(slope) - 0.30, 0), 0.30, passed, loc)
 

@@ -205,9 +205,11 @@ def test_t1_known_answer_bias(rho, threshold):
     """
     T1: |mean(I_hat) − I_true| / I_true ≤ threshold.
 
-    ρ≤0.7: threshold 5%.  ρ=0.9: 10% (pre-registered looser bar; KSG
-    is known to underestimate high MI — if exceeded, it is a finding
-    in the expected negative direction, not a surprise).
+    ρ≤0.7: threshold 5%.  ρ=0.9: 10% (pre-registered looser bar; expected
+    direction was underestimate. On-record result: bias = +0.00450 nats
+    (overestimate, +0.54% of I_true = 0.83037 nats at N=10,000, k=4 —
+    I_true = −½·ln(1−0.9²)). Predicted sign was wrong; the pass/fail bar
+    holds.
     """
     estimates = _run_seeds(rho=rho, N=N_CORE, k=K_CORE, S=S_CORE)
     mean_est = float(np.mean(estimates))
